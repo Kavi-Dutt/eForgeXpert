@@ -45,7 +45,13 @@ function createElement(el, elClass){
      element.classList.add(elClass)
      return element
  }
-
+function pendingStageBtn(element){
+element.classList.add('pending')
+}
+function successBtn(element){
+    element.classList.remove('pending')
+    element.classList.add('done')
+}
 function createDataTable(edetailerData) {
     if (sequancesDataViewer) sequancesDataViewer.innerHTML = ''
     edetailerData.sequences.forEach(slideName => {
@@ -76,12 +82,13 @@ function createDataTable(edetailerData) {
             zipBtn.classList.add('zip-btn')
             zipBtn.addEventListener('click', function (e) {
                 e.stopPropagation()
-                let sequanceId = this.id
+                let sequanceId = this.id;
                 console.log(sequanceId)
-                this.style.background = '#ee4949'
+                this.innerText='Zipping...';
+                pendingStageBtn(this)
                 ipcRenderer.invoke('request-for-compress', sequanceId).then((result) => {
-                    this.innerHTML = result
-                    this.style.background = '#247522'
+                    this.innerHTML = result;
+                    successBtn(this)
                 })
             })
 
@@ -93,10 +100,32 @@ function createDataTable(edetailerData) {
             thumbImgBtn.classList.add('thumbimg-btn');
             thumbImgBtn.addEventListener('click',function(e){
                 e.stopPropagation();
+                this.innerText ="Updating..."
+                pendingStageBtn(this)
                 thumbImgId = this.id;
                 console.log(thumbImgId);
                 changeWebviewSrc(thumbImgId);
                 ipcRenderer.send('request-for-screenshot', edetailURLPath(thumbImgId))
+                // reciveing response of request-for-screenshot
+                ipcRenderer.on('response-for-screenshot',(e,args)=>{
+
+                    // createing thumb image
+                let imgJPEG = createImg.toJPEG(args.screenshot,{imgWidth:328, imgHeight:232})
+
+                
+
+                //    saveing jpeg thumbimage
+                    createImg.saveImg({
+                        data: imgJPEG,
+                        fileName: '01_thumbnail',
+                        ext:'jpg',
+                        saveToPath: sequanceURL(thumbImgId)
+                    })
+                    this.innerText ="Done"
+                    successBtn(this)
+                    // console.log(imgJPEG)
+                })
+
                 
             })
 
@@ -258,25 +287,25 @@ ipcRenderer.on('data-from-main', (e, args) => {
 // })
 
 
-// reciveing requance of request-for-screenshot
-ipcRenderer.on('response-for-screenshot',(e,args)=>{
+// // reciveing response of request-for-screenshot
+// ipcRenderer.on('response-for-screenshot',(e,args)=>{
 
-    // createing thumb image
-   let imgJPEG = createImg.toJPEG(args.screenshot,{imgWidth:328, imgHeight:232})
+//     // createing thumb image
+//    let imgJPEG = createImg.toJPEG(args.screenshot,{imgWidth:328, imgHeight:232})
 
  
 
-//    saveing jpeg thumbimage
-    createImg.saveImg({
-        data: imgJPEG,
-        fileName: '01_thumbnail',
-        ext:'jpg',
-        saveToPath: sequanceURL(thumbImgId)
-    })
+// //    saveing jpeg thumbimage
+//     createImg.saveImg({
+//         data: imgJPEG,
+//         fileName: '01_thumbnail',
+//         ext:'jpg',
+//         saveToPath: sequanceURL(thumbImgId)
+//     })
     
- 
-    console.log(imgJPEG)
-})
+//  thumbImgBtn.querySelectorAll()
+//     // console.log(imgJPEG)
+// })
 
 
 // context menu for sequance data holder

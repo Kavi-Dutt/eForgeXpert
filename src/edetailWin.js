@@ -8,7 +8,6 @@ const EventEmitter = require('events');
 const { opendir, readdir} = require('fs/promises');
 // const colors = require('colors')
 const handleSequnce = require('./fileToShow');
-// const edetailWindowMenu = require('./edetailWindowMenu');
 let edetailWindow;
 let edetailWindowMenu = Menu.buildFromTemplate(require('./edetailWindowMenu'))
 
@@ -54,14 +53,16 @@ function creatEdetailWindow(dataForWindow){
         let counterIndex = 0;
         
       
+        // chageing title of window on page change
+        function changeTitle(title){
+          edetailWindow.webContents.on('did-finish-load',()=>{
+            edetailWindow.setTitle(title)
+          })
+        }
 
         function edetailURLPath (currentSequanceIndex){
           let currentSequanceName =  edetailerData.sequences.at(currentSequanceIndex)
-          // setting title of window
-          edetailWindow.webContents.on('did-finish-load',()=>{
-            edetailWindow.setTitle(currentSequanceName)
-          })
-          
+          changeTitle(currentSequanceName)
           // console.log.log(colors.cyan(currentSequanceName))
           return  path.join(edetailerData.htmlPath, currentSequanceName, getHtmlFile(currentSequanceName) );
         } 
@@ -107,6 +108,7 @@ function creatEdetailWindow(dataForWindow){
       //  going to given slide in gotSlide method form any sequence button
         ipcMain.on('gotoSlide', (e,args)=>{
           if(edetailerData.sequences.includes(args)){
+            changeTitle(args)
             let edetailURLPath = path.join(edetailerData.htmlPath, args, getHtmlFile(args) );
             edetailWindow.loadURL(`file:///${edetailURLPath}`);
              counterIndex =  edetailerData.sequences.indexOf(args)

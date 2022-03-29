@@ -153,7 +153,7 @@ mainWindow.on('unmaximize',()=>{
 ipcMain.handle('request-for-compress', async (e,args)=>{
         let execCompress = await compressFile.compress(args, edetailerData.htmlPath)
         // console.log.log('done')
-        return ('done')
+        return ('Done')
 })
 
 // handling request for compressing all files

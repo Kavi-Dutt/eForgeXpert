@@ -4,6 +4,7 @@
     box-sizing: border-box;
 }
 a{text-decoration: none;}
+
 ul{
     list-style: none;
     padding: 0;
@@ -356,9 +357,8 @@ div.all-sequances .sequances-data-viewer {
     margin-right: 5%;
 }
 
-button.zip-btn{
-    width: 15%;
-}
+/* button.zip-btn{
+} */
 
 .wrap-1 div.webview_container {
     width: 45%;
@@ -487,3 +487,19 @@ div#webview_left-nav button{
 
 
 
+
+
+
+
+
+.pending{
+    border: 1px solid #C5C5C5;
+    background-color: #1c2da9;
+}
+
+.done{
+    background-color:#247522;
+}
+.done:hover{
+    background-color:#247522;
+}
