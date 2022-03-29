@@ -1,0 +1,31 @@
+{
+  "name": "edetail-editor",
+  "version": "1.0.0",
+  "description": "working on it will tell you latter",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron .",
+    "watch": "nodemon --exec electron .",
+    "build": "electron-builder --help"
+  },
+  "nodemonConfig": {
+    "ignore": [
+      "data/*.json"
+    ]
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "colors": "^1.4.0",
+    "electron": "^17.2.0",
+    "electron-builder": "^22.14.13",
+    "nodemon": "^2.0.15"
+  },
+  "dependencies": {
+    "electron-window-state": "^5.0.3",
+    "imagemin": "^7.0.1",
+    "imagemin-jpegtran": "^7.0.0",
+    "imagemin-pngquant": "^9.0.2"
+  }
+}
