@@ -22,9 +22,9 @@ function creatEdetailWindow(dataForWindow){
 
      edetailWindow = new BrowserWindow({
         x: state.x, y: state.y,
-        skipTaskbar:false,
+        // skipTaskbar:false,
         backgroundColor:'#000',
-        darkTheme:true,
+        // darkTheme:true,
         width: state.width, height: state.height,
             webPreferences: {
                 contextIsolation: true,
@@ -52,11 +52,16 @@ function creatEdetailWindow(dataForWindow){
         });
         
         let counterIndex = 0;
-
-       
+        
+      
 
         function edetailURLPath (currentSequanceIndex){
           let currentSequanceName =  edetailerData.sequences.at(currentSequanceIndex)
+          // setting title of window
+          edetailWindow.webContents.on('did-finish-load',()=>{
+            edetailWindow.setTitle(currentSequanceName)
+          })
+          
           // console.log.log(colors.cyan(currentSequanceName))
           return  path.join(edetailerData.htmlPath, currentSequanceName, getHtmlFile(currentSequanceName) );
         } 
