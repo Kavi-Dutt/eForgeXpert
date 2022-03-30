@@ -236,8 +236,9 @@ const sequanceTableCreatedEvent = new Event('sequanceTableCreated');
         this.innerText="Zipping.."
         pendingStageBtn(this)
         this.disabled = true;
-        ipcRenderer.invoke('request-for-compressAll').then(()=>{
-            // console.log('done')
+        ipcRenderer.invoke('request-for-compressAll').then((result)=>{
+            this.innerText='Done'
+            successBtn(this)
         })
     })
 

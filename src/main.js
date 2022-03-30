@@ -49,7 +49,7 @@ function createWindow() {
     //     symbolColor: '#74b1be'
     //   },
     webPreferences: {
-        devTools:false,
+        // devTools:false,
         contextIsolation: false,
         nodeIntegration: true,
         webviewTag:true,
@@ -159,9 +159,9 @@ ipcMain.handle('request-for-compress', async (e,args)=>{
 })
 
 // handling request for compressing all files
-ipcMain.handle('request-for-compressAll',(e,args)=>{
-    let compressAllFiles = compressFile.compressAllFiles(edetailerData.sequences, edetailerData.htmlPath)
-    // console.log.log('all files are compressed')
+ipcMain.handle('request-for-compressAll',async(e,args)=>{
+    let compressAllFiles = await compressFile.compressAllFiles(edetailerData.sequences, edetailerData.htmlPath)
+    return compressAllFiles
 })
 
 ipcMain.on('request-for-sequenceData',async (e,args)=>{

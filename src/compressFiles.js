@@ -4,6 +4,9 @@ const path = require('path')
 const fs = require('fs');
 // const colors = require('colors')
 
+const Util = require('util');
+const { resolve } = require('path');
+const asyncExec = Util.promisify(exec);
 
 // escaping chracters in fileNames
  function replaceCharacters(string){
@@ -59,32 +62,37 @@ exports.compress = function(sequanceName, htmlPath){
 }
 
 // compressing  all files
-exports.compressAllFiles = function(sequanceArray, htmlPath){
-  return new Promise ((resolve, reject)=>{
-   for(i=0; i<sequanceArray.length; i++ ){
+exports.compressAllFiles = async function(sequanceArray, htmlPath){
+  return new Promise (async (resolve, reject)=>{
+  for(i=0; i<sequanceArray.length; i++ ){
      sequanceName = replaceCharacters(sequanceArray[i])
     let sequancePath = path.join(htmlPath,sequanceName)
     let zipedFileName = `${sequanceName}.zip`;
     let deliverablesPath = path.join(htmlPath, '..')
     let destinationPath = path.join(htmlPath, zipedFileName );
    
-    // console.log.log(colors.bgCyan(sequanceName));
+    console.log(sequanceName);
 
-    let execCompress = exec(`Compress-Archive -Path ${sequancePath}\\* -DestinationPath ${destinationPath} -Force`,{'shell':'powershell.exe'}, (err, stdout, stderr) => {
-      if (err) {
-          reject(err)
-        // console.log.error(`exec error: ${err}`);
-        return;
-      }
-    // console.log.log('file compressed')
+    let execCompress = await new Promise (resolve=>{
+      let childProcess = exec(`Compress-Archive -Path ${sequancePath}\\* -DestinationPath ${destinationPath} -Force`,{'shell':'powershell.exe'}, (err, stdout, stderr) => {
+        if (err) {
+            reject(err)
+          // console.log.error(`exec error: ${err}`);
+          return;
+        }
+      // console.log.log('file compressed')
     });
-    execCompress.on('exit',()=>{
-        resolve(execCompress)
+    
+    childProcess.on('exit',()=>{
+      resolve('hello')
     })
+     
+    })
+  }
+  resolve('compressed all')
+})
 
-   }
-
-  })
+  
 }
 
 
