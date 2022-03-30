@@ -183,6 +183,8 @@ ipcMain.on('request-for-screenshot',(e,args)=>{
     
 })
 
+
+
 // Manage new window state
 state.manage(mainWindow)
     // Open DevTools - Remove for PRODUCTION!

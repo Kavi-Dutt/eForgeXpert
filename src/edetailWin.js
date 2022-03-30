@@ -78,6 +78,15 @@ function creatEdetailWindow(dataForWindow){
 
         edetailWindow.loadURL(`file:///${edetailURLPath(counterIndex)}`);
 
+
+        // brings edetail window in focus when clicked on fullscreen btn in rederer
+        ipcMain.on('focus-on-edetailWindow',(e,args)=>{
+          changeTitle(args)
+          counterIndex =  edetailerData.sequences.indexOf(args)
+          edetailWindow.loadURL(`file:///${edetailURLPath(counterIndex)}`);
+          edetailWindow.focus()
+          return counterIndex
+      })
         // console.log.log(counterIndex)
 
          // function for going to next slide
@@ -109,9 +118,8 @@ function creatEdetailWindow(dataForWindow){
         ipcMain.on('gotoSlide', (e,args)=>{
           if(edetailerData.sequences.includes(args)){
             changeTitle(args)
-            let edetailURLPath = path.join(edetailerData.htmlPath, args, getHtmlFile(args) );
-            edetailWindow.loadURL(`file:///${edetailURLPath}`);
-             counterIndex =  edetailerData.sequences.indexOf(args)
+            counterIndex =  edetailerData.sequences.indexOf(args)
+            edetailWindow.loadURL(`file:///${edetailURLPath(counterIndex)}`);
              // console.log.log(colors.cyan(args))
              // console.log.log(colors.green(counterIndex))
             return counterIndex

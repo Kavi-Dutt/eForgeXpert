@@ -2,18 +2,23 @@ const{ipcRenderer, nativeImage,shell} = require('electron')
 const path = require('path')
 const EventEmitter = require('events');
 
-const createImg = require('./createImg')
+const createImg = require('./createImg');
+const { noDeprecation } = require('process');
 
-let edetailerData = {};
 const emitter = new EventEmitter();
-const webview = document.querySelector('webview')
-;
-
-let sequanceImg_table;
-let thumbImgId;
 
 
-const sequancesDataViewer = document.querySelector('.sequances-data-viewer')
+
+const webview = document.querySelector('webview'),
+      sequancesDataViewer = document.querySelector('.sequances-data-viewer');
+      searchSequance =document.querySelector('.search-sequance')
+
+let edetailerData = {},
+    sequanceImg_table, 
+    thumbImgId, 
+    currentSequanceInWebview;
+
+
 
 function edetailURLPath(currentSequanceName) {
     return path.join(edetailerData.htmlPath, currentSequanceName, getHtmlFile(currentSequanceName));
@@ -37,7 +42,8 @@ function openDilog() {
 }
 
 function changeWebviewSrc(sequanceName) {
-    document.querySelector('webview').src = `file:///${edetailURLPath(sequanceName)}`;
+    currentSequanceInWebview = sequanceName
+    webview.src = `file:///${edetailURLPath(sequanceName)}`;
 }
 
 function createElement(el, elClass){
@@ -266,54 +272,29 @@ function createImgsTable(args,sequanceName){
 }
 
 
-
-
-// sending ipc message on click of add project btn
+// sending ipc message on click of add project btn (currently in navigation bar)
 document.querySelector('#add-project_btn').addEventListener('click', openDilog)
+
+
+// btn which will focus on edetailWindow
+let fullscreenBtn=document.querySelector('.fullscreen-btn')
+fullscreenBtn.addEventListener('click',function(){
+    ipcRenderer.send('focus-on-edetailWindow',currentSequanceInWebview)
+    console.log('fullscreen btn clicked')
+})
 
 
 
 ipcRenderer.on('data-from-main', (e, args) => {
     edetailerData = args
     createDataTable(edetailerData)
-    document.querySelector('webview').src = `file:///${edetailURLPath(edetailerData.sequences[0])}`
+    changeWebviewSrc(edetailerData.sequences[0])
 
 })
 
 
-// reciveing data after request-for-sequenceDaata event
-// ipcRenderer.on('images-from-main',(e,args)=>{
-//     createImgsTable(args)
-// })
-
-
-// // reciveing response of request-for-screenshot
-// ipcRenderer.on('response-for-screenshot',(e,args)=>{
-
-//     // createing thumb image
-//    let imgJPEG = createImg.toJPEG(args.screenshot,{imgWidth:328, imgHeight:232})
-
- 
-
-// //    saveing jpeg thumbimage
-//     createImg.saveImg({
-//         data: imgJPEG,
-//         fileName: '01_thumbnail',
-//         ext:'jpg',
-//         saveToPath: sequanceURL(thumbImgId)
-//     })
-    
-//  thumbImgBtn.querySelectorAll()
-//     // console.log(imgJPEG)
-// })
-
-
-// context menu for sequance data holder
-
-
 document.addEventListener('sequanceTableCreated',function(){
     let sequancesDataHolder =document.querySelectorAll('.sequances-data_holder')
-    
     sequancesDataHolder.forEach(el=>{
         let sequanceId = el.dataset.sequanceId;
         let sequancePath = sequanceURL(sequanceId)
@@ -322,8 +303,22 @@ document.addEventListener('sequanceTableCreated',function(){
             console.log(sequancePath)
         })
     })
-    
+
+    // searching sequance
+    searchSequance.addEventListener('keyup',function(e){
+        sequancesDataHolder.forEach(el=>{
+            searchValue = searchSequance.value.toLowerCase()
+            let sequanceId = el.dataset.sequanceId;
+           let hasMatch = sequanceId.toLowerCase().includes(searchValue);
+           el.parentElement.style.display = hasMatch? "block": "none";
+        //    console.log(hasMatch);
+        })
+        // console.log(searchValue);
+    })
     console.log('custom event trigered')
+
 })
+
+
 
 
