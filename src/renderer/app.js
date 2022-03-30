@@ -233,7 +233,12 @@ const sequanceTableCreatedEvent = new Event('sequanceTableCreated');
     // sending request for ziping all files
     document.querySelector('.compress-all-btn').addEventListener('click', function () {
         console.log('compress all')
-        ipcRenderer.invoke('request-for-compressAll')
+        this.innerText="Zipping.."
+        pendingStageBtn(this)
+        this.disabled = true;
+        ipcRenderer.invoke('request-for-compressAll').then(()=>{
+            // console.log('done')
+        })
     })
 
 

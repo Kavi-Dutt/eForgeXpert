@@ -14,7 +14,8 @@
       "data/*.json"
     ]
   },
-  "author": "",
+  "repository": "https://github.com/Kavi-Dutt/edetail-editor.git",
+  "author": "Indegene,  kavi dutt machkoli",
   "license": "ISC",
   "devDependencies": {
     "colors": "^1.4.0",

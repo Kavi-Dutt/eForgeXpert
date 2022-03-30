@@ -49,6 +49,7 @@ function createWindow() {
     //     symbolColor: '#74b1be'
     //   },
     webPreferences: {
+        devTools:false,
         contextIsolation: false,
         nodeIntegration: true,
         webviewTag:true,
@@ -102,6 +103,7 @@ ipcMain.on('open-dialog-trigerd',(e,args)=>{
    }).catch((err)=>console.log(err))
 })
 })
+
 
 
 // parsing and sending data to renderer 
