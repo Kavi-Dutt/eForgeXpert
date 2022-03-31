@@ -4,10 +4,6 @@ const path = require('path')
 const fs = require('fs');
 // const colors = require('colors')
 
-const Util = require('util');
-const { resolve } = require('path');
-const asyncExec = Util.promisify(exec);
-
 // escaping chracters in fileNames
  function replaceCharacters(string){
   const characters = [
@@ -84,7 +80,8 @@ exports.compressAllFiles = async function(sequanceArray, htmlPath){
     });
     
     childProcess.on('exit',()=>{
-      resolve('hello')
+      mainWindow.webContents.send('on-compressing-all',sequanceArray[i])
+      resolve('compressed')
     })
      
     })

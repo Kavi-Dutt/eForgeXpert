@@ -37,7 +37,7 @@ function createWindow() {
         
       })
 
-   let mainWindow = new BrowserWindow({
+   global.mainWindow = new BrowserWindow({
     x: 0, y:0,
     width: state.width, height: state.height,
     // width: 800, height: 600,
@@ -198,6 +198,7 @@ state.manage(mainWindow)
         // app.quit()
     })
     console.log('app resatarted'.rainbow)
+
 }
 
 // app is ready

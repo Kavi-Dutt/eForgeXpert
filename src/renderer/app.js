@@ -52,11 +52,13 @@ function createElement(el, elClass){
      return element
  }
 function pendingStageBtn(element){
-element.classList.add('pending')
+element.classList.add('pending');
+element.style.cursor= 'progress';
 }
 function successBtn(element){
-    element.classList.remove('pending')
-    element.classList.add('done')
+    element.classList.remove('pending');
+    element.classList.add('done');
+    element.style.cursor= 'auto';
 }
 function createDataTable(edetailerData) {
     if (sequancesDataViewer) sequancesDataViewer.innerHTML = ''
@@ -82,13 +84,13 @@ function createDataTable(edetailerData) {
 
             // zip btn
             let zipBtn = createElement('button','btn-type-3')
-            zipBtn.id= slideName;
+            zipBtn.dataset.sequanceId = slideName;
             zipBtn.innerText="ZIP";
             zipBtn.dataset.tooltip="create zip file";
             zipBtn.classList.add('zip-btn')
             zipBtn.addEventListener('click', function (e) {
                 e.stopPropagation()
-                let sequanceId = this.id;
+                let sequanceId = this.dataset.sequanceId;
                 console.log(sequanceId)
                 this.innerText='Zipping...';
                 pendingStageBtn(this)
@@ -100,7 +102,7 @@ function createDataTable(edetailerData) {
 
             // update thumb image btn
             let thumbImgBtn = createElement('button','btn-type-3');
-            thumbImgBtn.id= slideName;
+            thumbImgBtn.dataset.sequanceId= slideName;
             thumbImgBtn.innerText="Update Thumb Image";
             thumbImgBtn.dataset.tooltip="Update or create Thumb Image";
             thumbImgBtn.classList.add('thumbimg-btn');
@@ -108,7 +110,7 @@ function createDataTable(edetailerData) {
                 e.stopPropagation();
                 this.innerText ="Updating..."
                 pendingStageBtn(this)
-                thumbImgId = this.id;
+                thumbImgId = this.dataset.sequanceId;
                 console.log(thumbImgId);
                 changeWebviewSrc(thumbImgId);
                 ipcRenderer.send('request-for-screenshot', edetailURLPath(thumbImgId))
@@ -229,22 +231,6 @@ const sequanceTableCreatedEvent = new Event('sequanceTableCreated');
 
     document.dispatchEvent(sequanceTableCreatedEvent)
 
-
-    // sending request for ziping all files
-    document.querySelector('.compress-all-btn').addEventListener('click', function () {
-        console.log('compress all')
-        this.innerText="Zipping.."
-        pendingStageBtn(this)
-        this.disabled = true;
-        ipcRenderer.invoke('request-for-compressAll').then((result)=>{
-            this.innerText='Done'
-            successBtn(this)
-        })
-    })
-
-
-
-
 }
 
 
@@ -300,7 +286,9 @@ ipcRenderer.on('data-from-main', (e, args) => {
 
 
 document.addEventListener('sequanceTableCreated',function(){
-    let sequancesDataHolder =document.querySelectorAll('.sequances-data_holder')
+    let sequancesDataHolder =document.querySelectorAll('.sequances-data_holder'),
+        zipBtns =document.querySelectorAll('.zip-btn');
+
     sequancesDataHolder.forEach(el=>{
         let sequanceId = el.dataset.sequanceId;
         let sequancePath = sequanceURL(sequanceId)
@@ -322,6 +310,47 @@ document.addEventListener('sequanceTableCreated',function(){
         // console.log(searchValue);
     })
     console.log('custom event trigered')
+
+    // compressing all
+    // sending request for ziping all files
+    document.querySelector('.compress-all-btn').addEventListener('click', function () {
+        console.log('compress all')
+        this.innerText="Zipping.."
+        pendingStageBtn(this)
+        this.disabled = true;
+
+        // changeing stage of all zip btns to pending stage
+        zipBtns.forEach(el=>{
+            pendingStageBtn(el)
+            el.innerText='Zipping...'
+        })
+
+        
+        ipcRenderer.invoke('request-for-compressAll').then((result)=>{
+            this.innerText='Done'
+            successBtn(this)
+            this.disabled = false;
+        })
+    })
+
+    // dupplicate arry for zipBtns
+    let duplicateZipBtns = [...zipBtns]
+
+    ipcRenderer.on('on-compressing-all',(e,args)=>{
+
+        for(let el of duplicateZipBtns){
+            if (el.dataset.sequanceId == args){
+                el.innerText= "Done";
+                successBtn(el)
+                duplicateZipBtns.shift()
+                // console.log(...duplicateZipBtns)
+                break
+                
+            }
+        }
+
+
+    })
 
 })
 
