@@ -60,17 +60,26 @@ exports.compress = function(sequanceName, htmlPath){
 // compressing  all files
 exports.compressAllFiles = async function(sequanceArray, htmlPath){
   return new Promise (async (resolve, reject)=>{
-  for(i=0; i<sequanceArray.length; i++ ){
-     sequanceName = replaceCharacters(sequanceArray[i])
-    let sequancePath = path.join(htmlPath,sequanceName)
-    let zipedFileName = `${sequanceName}.zip`;
-    let deliverablesPath = path.join(htmlPath, '..')
-    let destinationPath = path.join(htmlPath, zipedFileName );
-   
-    console.log(sequanceName);
+    let replacedCharSequanceArray= []
+  // sequanceArray.forEach ( el=>{
+  //    sequanceName = replaceCharacters(el)
+  //    replacedCharSequanceArray.push(sequanceName)
+  //   // let sequancePath = path.join(htmlPath,sequanceName)
+  //   // let zipedFileName = `${sequanceName}.zip`;
+  //   // let deliverablesPath = path.join(htmlPath, '..')
+  //   // let destinationPath = path.join(htmlPath, zipedFileName );
+  // })
+  // console.log(sequanceName)
+    // console.log(sequanceName);
 
     let execCompress = await new Promise (resolve=>{
-      let childProcess = exec(`Compress-Archive -Path ${sequancePath}\\* -DestinationPath ${destinationPath} -Force`,{'shell':'powershell.exe'}, (err, stdout, stderr) => {
+      let childProcess = exec(`
+      $htmlPath ="${htmlPath}"
+      $arr = @(Get-ChildItem -Path $htmlPath  -Name)
+foreach ($item in $arr) {
+    Write-Host " $i : $item"
+    Compress-Archive -Path $htmlPath\\$item\\* -DestinationPath $htmlPath\\"$item".zip -Force
+}`,{'shell':'powershell.exe'}, (err, stdout, stderr) => {
         if (err) {
             reject(err)
           // console.log.error(`exec error: ${err}`);
@@ -80,12 +89,12 @@ exports.compressAllFiles = async function(sequanceArray, htmlPath){
     });
     
     childProcess.on('exit',()=>{
-      mainWindow.webContents.send('on-compressing-all',sequanceArray[i])
+      mainWindow.webContents.send('on-compressing-all','done')
       resolve('compressed')
     })
      
     })
-  }
+  // }
   resolve('compressed all')
 })
 

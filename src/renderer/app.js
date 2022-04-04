@@ -330,6 +330,10 @@ document.addEventListener('sequanceTableCreated',function(){
             this.innerText='Done'
             successBtn(this)
             this.disabled = false;
+            zipBtns.forEach(el=>{
+                el.innerText= "Done";
+                successBtn(el)
+            })
         })
     })
 
@@ -338,16 +342,16 @@ document.addEventListener('sequanceTableCreated',function(){
 
     ipcRenderer.on('on-compressing-all',(e,args)=>{
 
-        for(let el of duplicateZipBtns){
-            if (el.dataset.sequanceId == args){
-                el.innerText= "Done";
-                successBtn(el)
-                duplicateZipBtns.shift()
-                // console.log(...duplicateZipBtns)
-                break
+        // for(let el of duplicateZipBtns){
+        //     if (el.dataset.sequanceId == args){
+        //         el.innerText= "Done";
+        //         successBtn(el)
+        //         duplicateZipBtns.shift()
+        //         // console.log(...duplicateZipBtns)
+        //         break
                 
-            }
-        }
+        //     }
+        // }
 
 
     })
