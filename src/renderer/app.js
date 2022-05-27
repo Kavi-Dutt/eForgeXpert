@@ -279,9 +279,8 @@ fullscreenBtn.addEventListener('click',function(){
 
 ipcRenderer.on('data-from-main', (e, args) => {
     edetailerData = args
-    createDataTable(edetailerData)
+    createDataTable(edetailerData);
     changeWebviewSrc(edetailerData.sequences[0])
-    console.log(args)
 })
 
 document.addEventListener('sequanceTableCreated',function(){

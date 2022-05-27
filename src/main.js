@@ -9,7 +9,7 @@ const { opendir, readdir} = require('fs/promises');
 
 
 
-const colors = require('colors')
+// const colors = require('colors')
 
 const mainMenu = require('./mainMenu')
 const {htmlDirectory} = require('./fileToShow')
@@ -109,12 +109,12 @@ ipcMain.on('open-dialog-trigerd',(e,args)=>{
 })
 })
 
-// parsing and sending data to renderer 
+// parsing and sending data to renderer and open edetail window function
 function openEdetailWindow(){
     try{
         edetailerData = fs.readFileSync(path.join(userDataPath,'edetailerData.json'));
         edetailerData = JSON.parse(edetailerData);
-        console.log(colors.red(edetailerData))
+        // console.log(colors.red(edetailerData))
         if(mainWindow.webContents.isLoading()){
             mainWindow.webContents.on('dom-ready',()=>{
                 mainWindow.webContents.send('data-from-main', edetailerData);
@@ -132,6 +132,7 @@ function openEdetailWindow(){
    edetailWindow = creatEdetailWindow(edetailerData);
 }
 
+// checking for last added project if already exist then open it
 fs.access(path.join(userDataPath,'edetailerData.json'),fs.constants.F_OK, (err) => {
     if(err){
         console.log("doesnot exist");
@@ -142,6 +143,7 @@ fs.access(path.join(userDataPath,'edetailerData.json'),fs.constants.F_OK, (err) 
     }
   })
 
+//   ____open edetatil window on click of add btn
 emitter.on('filesLoaded', (e)=>{
     openEdetailWindow();
     
