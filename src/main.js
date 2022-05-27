@@ -9,7 +9,7 @@ const { opendir, readdir} = require('fs/promises');
 
 
 
-// const colors = require('colors')
+const colors = require('colors')
 
 const mainMenu = require('./mainMenu')
 const {htmlDirectory} = require('./fileToShow')
@@ -71,6 +71,7 @@ function createWindow() {
           console.log(`stdout ${stdout}`)
           });
     }
+    
     // context menu for sequance data holder area in renderer
     let contextMenuSequanceDataHolder = Menu.buildFromTemplate([
         {
@@ -86,6 +87,10 @@ ipcMain.on('sequancesDataHolder/contextmenu',(e,args)=>{
     contextMenuSequanceDataHolder.popup()
     contextMenuSequanceDataHolder.getMenuItemById('vscode').click=()=>openInVsCode(args)
 })
+
+let userDataPath = app.getPath('userData');
+// console.log(userDataPath)
+
 
 // loading and storing files in HTML folder
 mainWindow.webContents.on('did-finish-load',()=>{
@@ -104,21 +109,41 @@ ipcMain.on('open-dialog-trigerd',(e,args)=>{
 })
 })
 
-
-
 // parsing and sending data to renderer 
-emitter.on('filesLoaded', (e)=>{
-    let userDataPath = app.getPath('userData')
+function openEdetailWindow(){
     try{
-        edetailerData = fs.readFileSync(path.join(userDataPath,'edetailerData.json'))
-        edetailerData = JSON.parse(edetailerData)
-        // console.log.log(colors.red(edetailerData))
-        mainWindow.webContents.send('data-from-main', edetailerData)
+        edetailerData = fs.readFileSync(path.join(userDataPath,'edetailerData.json'));
+        edetailerData = JSON.parse(edetailerData);
+        console.log(colors.red(edetailerData))
+        if(mainWindow.webContents.isLoading()){
+            mainWindow.webContents.on('dom-ready',()=>{
+                mainWindow.webContents.send('data-from-main', edetailerData);
+            })
+        }
+        else{
+            mainWindow.webContents.send('data-from-main', edetailerData);
+        }
+        
+        
     }catch(err){
         // console.log.log(err)
     }
     
-   edetailWindow = creatEdetailWindow(edetailerData)
+   edetailWindow = creatEdetailWindow(edetailerData);
+}
+
+fs.access(path.join(userDataPath,'edetailerData.json'),fs.constants.F_OK, (err) => {
+    if(err){
+        console.log("doesnot exist");
+    }
+    else{
+        openEdetailWindow();
+        console.log("esist");
+    }
+  })
+
+emitter.on('filesLoaded', (e)=>{
+    openEdetailWindow();
     
 })
 

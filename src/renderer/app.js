@@ -281,9 +281,8 @@ ipcRenderer.on('data-from-main', (e, args) => {
     edetailerData = args
     createDataTable(edetailerData)
     changeWebviewSrc(edetailerData.sequences[0])
-
+    console.log(args)
 })
-
 
 document.addEventListener('sequanceTableCreated',function(){
     let sequancesDataHolder =document.querySelectorAll('.sequances-data_holder'),

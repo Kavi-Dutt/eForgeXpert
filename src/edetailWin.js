@@ -63,7 +63,7 @@ function creatEdetailWindow(dataForWindow){
         function edetailURLPath (currentSequanceIndex){
           let currentSequanceName =  edetailerData.sequences.at(currentSequanceIndex)
           changeTitle(currentSequanceName)
-          // console.log.log(colors.cyan(currentSequanceName))
+          console.log(currentSequanceName)
           return  path.join(edetailerData.htmlPath, currentSequanceName, getHtmlFile(currentSequanceName) );
         } 
 
