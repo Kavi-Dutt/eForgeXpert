@@ -22,8 +22,25 @@ const CLMPlayer ={
     }
 
 }
+
+//______tracking error in gotoslide
 ipcRenderer.on('gotoSlideReply',(e,args)=>{
     console.error(args)
+})
+
+
+// ______going next and previous on left and right arrow key
+document.addEventListener('keyup',(e)=>{
+    switch(e.key){
+        case "ArrowRight":
+            console.log("right");
+            ipcRenderer.send('edetailWin/ArrowRight');
+            break;
+        case "ArrowLeft":
+            console.log("left");
+            ipcRenderer.send('edetailWin/ArrowLeft');
+            break;
+    }
 })
 
 contextBridge.exposeInMainWorld('CLMPlayer', CLMPlayer)

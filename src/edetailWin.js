@@ -136,6 +136,16 @@ function creatEdetailWindow(dataForWindow){
 
         // going to prev slide from in sequence button
         ipcMain.on('goPreviousSequence',(e)=>goPreviousSequence())
+
+        // going to next slide on right key perssed
+        ipcMain.on('edetailWin/ArrowRight',(e)=>{
+          goNextSequence();
+        })
+
+        // going to prev slide on left key perssed
+        ipcMain.on('edetailWin/ArrowLeft',(e)=>{
+          goPreviousSequence();
+        })
        
         state.manage(edetailWindow);
         edetailWindow.setMenu(edetailWindowMenu)
