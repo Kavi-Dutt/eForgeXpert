@@ -30,7 +30,7 @@ ipcRenderer.on('gotoSlideReply',(e,args)=>{
 
 
 // ______going next and previous on left and right arrow key
-document.addEventListener('keyup',(e)=>{
+window.addEventListener('keyup',(e)=>{
     switch(e.key){
         case "ArrowRight":
             console.log("right");
