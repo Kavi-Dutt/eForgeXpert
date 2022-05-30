@@ -272,7 +272,6 @@ document.querySelector('#add-project_btn').addEventListener('click', openDilog)
 let fullscreenBtn=document.querySelector('.fullscreen-btn')
 fullscreenBtn.addEventListener('click',function(){
     ipcRenderer.send('focus-on-edetailWindow',currentSequanceInWebview)
-    console.log('fullscreen btn clicked')
 })
 
 
