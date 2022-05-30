@@ -86,11 +86,9 @@ function creatEdetailWindow(dataForWindow) {
       counterIndex = edetailerData.sequences.indexOf(args)
       edetailWindow.loadURL(`file:///${edetailURLPath(counterIndex)}`);
       edetailWindow.focus()
-      console.log("yes");
       return counterIndex
     }
     else {
-      console.log("no");
       creatEdetailWindow(edetailerData);
     }
 

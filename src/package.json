@@ -1,7 +1,7 @@
 {
   "name": "edetail-editor",
-  "version": "1.0.0",
-  "description": "working on it will tell you latter",
+  "version": "1.1.0",
+  "description": "edetail editor",
   "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -15,7 +15,7 @@
     ]
   },
   "repository": "https://github.com/Kavi-Dutt/edetail-editor.git",
-  "author": "Indegene,  kavi dutt machkoli",
+  "author": "Indegene, kavi.machkoli",
   "license": "ISC",
   "devDependencies": {
     "colors": "^1.4.0",

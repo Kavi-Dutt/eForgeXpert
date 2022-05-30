@@ -1,61 +1,56 @@
 const path = require('path');
-const fs =require('fs')
+const fs = require('fs');
+const { doesNotMatch } = require('assert');
 // const {creatEdetailWindow} = require('./edetailWin')
 
 
 
 
-module.exports = [{
-        id:'prevSlideBtn',
-        label: '<',
+module.exports = [
+    {
+        id: 'for-spave_1',
+        label: '',
+
     },
     {
-        id:'nextSlideBtn',
-        label: '>',
+        id: 'prevSlideBtn',
+        label: '<< Prev',
     },
     {
-        label: 'Sequence',
-        submenu: [{
-                label: 'file-1',
-                role: 'toggleDevTools'
+        id: '',
+        label: '',
+
+    },
+    {
+        id: 'nextSlideBtn',
+        label: 'Next >>',
+    },
+    {
+        id: '',
+        label: '',
+
+    },
+    {
+        id: '',
+        label: '',
+
+    },
+    {
+        id: 'edetailWin-setting',
+        label: 'setting',
+        submenu: [
+            {
+                label: "Enable DevTool Editing",
+                id: 'enableDevToolEdit',
             },
             {
-                label: 'file-2',
-                role: 'toggleDevTools'
+                label: "Disable DevTool Editing",
+                id: 'disableDevToolEdit',
+                visible:false,
             }
         ]
+
     },
-    {
-        label: 'vs code',
-        submenu: [{
-                label: 'one',
-                submenu: [{
-                        label: 'one-a',
-                        click:()=>{
-                            // console.log.log('hello')
-                        }
-                    },
-                    {
-                        label: 'one-b'
-                    },
-                    {
-                        label: 'one-c'
-                    },
-                    {
-                        label: 'one-d'
-                    },
-                ]
-            },
-            {
-                label: 'two'
-            },
-            {
-                label: 'three'
-            },
-            {
-                label: 'four'
-            },
-        ],
-    }
+
 
 ]
