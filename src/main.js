@@ -49,7 +49,7 @@ function createWindow() {
     //     symbolColor: '#74b1be'
     //   },
     webPreferences: {
-        // devTools:false,
+        devTools:false,
         contextIsolation: false,
         nodeIntegration: true,
         webviewTag:true,

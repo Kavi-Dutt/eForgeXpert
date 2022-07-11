@@ -36,6 +36,20 @@ module.exports = [
 
     },
     {
+        id:'toggleDevTool',
+        role:'toggleDevTools',
+    },
+    {
+        id: '',
+        label: '',
+
+    },
+    {
+        id: '',
+        label: '',
+
+    },
+    {
         id: 'edetailWin-setting',
         label: 'setting',
         submenu: [

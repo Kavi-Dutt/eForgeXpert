@@ -33,11 +33,9 @@ ipcRenderer.on('gotoSlideReply',(e,args)=>{
 window.addEventListener('keyup',(e)=>{
     switch(e.key){
         case "ArrowRight":
-            console.log("right");
             ipcRenderer.send('edetailWin/ArrowRight');
             break;
         case "ArrowLeft":
-            console.log("left");
             ipcRenderer.send('edetailWin/ArrowLeft');
             break;
     }

@@ -46,6 +46,11 @@ function creatEdetailWindow(dataForWindow) {
     edetailWindow.webContents.removeWorkSpace(edetailerData.htmlPath)
   });
 
+  function removeWorkSpace(){
+    if (!edetailWindow?.isDevToolsOpened()) {edetailWindow.openDevTools()}
+    edetailWindow.webContents.removeWorkSpace(edetailerData.htmlPath)
+  }
+
   edetailWindow.on('closed', () => {
     edetailWindow = null
   });
@@ -70,10 +75,20 @@ function creatEdetailWindow(dataForWindow) {
 
 
   // adding current porject to workspace 
-  edetailWindow.openDevTools()
-  edetailWindow.webContents.addWorkSpace(edetailerData.htmlPath)
-  edetailWindow.closeDevTools()
+  
 
+  function addWorkSpace(){
+    if (!edetailWindow?.isDevToolsOpened()){
+       edetailWindow.openDevTools()
+       edetailWindow.webContents.addWorkSpace(edetailerData.htmlPath)
+      }
+    else{
+      edetailWindow.closeDevTools()
+      edetailWindow.openDevTools()
+      edetailWindow.webContents.addWorkSpace(edetailerData.htmlPath)
+    }
+    // edetailWindow.closeDevTools()
+  }
 
 
   edetailWindow.loadURL(`file:///${edetailURLPath(counterIndex)}`);
@@ -152,6 +167,27 @@ function creatEdetailWindow(dataForWindow) {
   ipcMain.on('edetailWin/ArrowLeft', (e) => {
     goPreviousSequence();
   })
+
+
+  // adding and removeing file from workspace
+  let enableDevToolEdit = edetailWindowMenu.getMenuItemById('enableDevToolEdit');
+
+  let disableDevToolEdit = edetailWindowMenu.getMenuItemById('disableDevToolEdit')
+
+  enableDevToolEdit.click = function() {
+    addWorkSpace()
+    this.visible=false;
+    disableDevToolEdit.visible= true;
+     console.log('live edit')
+   }
+  disableDevToolEdit.click = function() {
+    removeWorkSpace();
+    this.visible=false;
+    enableDevToolEdit.visible= true;
+     console.log('live.. edit')
+   }
+  
+
 
   state.manage(edetailWindow);
   edetailWindow.setMenu(edetailWindowMenu)
