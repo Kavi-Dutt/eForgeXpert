@@ -148,7 +148,10 @@ emitter.on('filesLoaded', (e)=>{
     openEdetailWindow();
     
 })
-
+// handling sequance data request from preload.js
+ipcMain.handle("preload/request/sequanceData",(e)=>{
+    return edetailerData;
+})
 
 // minimizing main window 
 ipcMain.on('app/minimize', e=>{
@@ -199,10 +202,15 @@ ipcMain.on('request-for-sequenceData',async (e,args)=>{
     // console.log.log(colors.bgRed(sequanceImages))
 })
 
-ipcMain.handle('compress-img-request',(e,args)=>{
+/* 
+ -> comenting below handler for compersing img
+ -> not working in production.
+*/
+
+/* ipcMain.handle('compress-img-request',(e,args)=>{
     // console.log.log(args)
    return (sequanceDataOp.compressImg(args,edetailerData.htmlPath))
-})
+}) */
 
 ipcMain.on('request-for-screenshot',(e,args)=>{
     capturePage(args, screenshot=>{

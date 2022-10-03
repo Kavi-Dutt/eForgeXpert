@@ -53,12 +53,12 @@ function createElement(el, elClass){
  }
 function pendingStageBtn(element){
 element.classList.add('pending');
-element.style.cursor= 'progress';
+element.style.cursor= 'wait';
 }
 function successBtn(element){
     element.classList.remove('pending');
     element.classList.add('done');
-    element.style.cursor= 'auto';
+    element.style.cursor= 'pointer';
 }
 function createDataTable(edetailerData) {
     if (sequancesDataViewer) sequancesDataViewer.innerHTML = ''
@@ -109,7 +109,13 @@ function createDataTable(edetailerData) {
             thumbImgBtn.addEventListener('click',function(e){
                 e.stopPropagation();
                 this.innerText ="Updating..."
-                pendingStageBtn(this)
+                pendingStageBtn(this);
+                // document.querySelector("").style.cursor="progress";
+                let all_thumbImgBtns =document.querySelectorAll(".thumbimg-btn");
+                all_thumbImgBtns.forEach(function(btn){
+                    btn.style.pointerEvents ="none";
+                })
+                document.querySelector(".all-sequances").style.cursor="progress"
                 thumbImgId = this.dataset.sequanceId;
                 console.log(thumbImgId);
                 changeWebviewSrc(thumbImgId);
@@ -130,7 +136,11 @@ function createDataTable(edetailerData) {
                         saveToPath: sequanceURL(thumbImgId)
                     })
                     this.innerText ="Done"
-                    successBtn(this)
+                    successBtn(this);
+                    all_thumbImgBtns.forEach(function(btn){
+                        btn.style.pointerEvents ="auto";
+                    })
+                    document.querySelector(".all-sequances").style.cursor="auto";
                     // console.log(imgJPEG)
                 })
 
@@ -196,18 +206,6 @@ function createDataTable(edetailerData) {
                 ipcRenderer.on('images-from-main',(e,args)=>{
                     let imgsOfSequance = createImgsTable(args,slideName)
                     sequanceImages.appendChild(imgsOfSequance)
-
-                    // adding click functionlity on compress images btn
-                    let allCompressImgBtns = document.querySelectorAll('.compress-img-btn')
-                    for(i=0; i < allCompressImgBtns.length; i++){
-                        let compressImgBtn = allCompressImgBtns[i]
-                        compressImgBtn.addEventListener('click',function(e){
-                        e.stopPropagation()
-                        let btnImgId = this.dataset.imgId
-                        ipcRenderer.invoke('compress-img-request',btnImgId).then((result)=>console.log(result))
-                        // console.log(btnImgId)
-                        })
-                    }
                     })
 
                     this.classList.add('active')
@@ -243,22 +241,22 @@ function createImgsTable(args,sequanceName){
         const row = sequanceImg_table.insertRow()
         let imageNameTd =row.insertCell(0)
         imageNameTd.innerText = key; 
-        row.addEventListener('dblclick',()=>shell.openPath(imgPath))
+        row.addEventListener('click',()=>shell.openPath(imgPath))
         row.insertCell(1).innerText = args[key];
-        row.insertCell(2).innerHTML =  `<button data-img-id = "${key}" class ="compress-img-btn btn-type-3"> compress </button>`
+        // row.insertCell(2).innerHTML =  `<button data-img-id = "${key}" class ="compress-img-btn btn-type-3"> compress </button>`
         // console.log(key)
     }
 
     // sends compress image request to main
-    // let allCompressImgBtns = document.querySelectorAll('.compress-img-btn')
-    // for(i=0; i < allCompressImgBtns.length; i++){
-    //     let compressImgBtn = allCompressImgBtns[i]
-    //     compressImgBtn.addEventListener('click',function(){
-    //     let btnImgId = this.dataset.imgId
-    //     ipcRenderer.invoke('compress-img-request',btnImgId).then((result)=>console.log(result))
-    //     console.log(btnImgId)
-    //     })
-    // }
+   /*  let allCompressImgBtns = document.querySelectorAll('.compress-img-btn')
+    for(i=0; i < allCompressImgBtns.length; i++){
+        let compressImgBtn = allCompressImgBtns[i]
+        compressImgBtn.addEventListener('click',function(){
+        let btnImgId = this.dataset.imgId
+        ipcRenderer.invoke('compress-img-request',btnImgId).then((result)=>console.log(result))
+        console.log(btnImgId)
+        })
+    } */
     
     return sequanceImg_table
 }

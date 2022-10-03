@@ -425,7 +425,7 @@ div#webview_left-nav button{
 .sequances-images table tr {
     box-shadow: 0 1px 12px -3px #b3b3b3;
     border-collapse: separate;
-    
+    cursor: pointer;
 }
 .sequances-images table tr:hover {
      background-color: #8591ef30;;

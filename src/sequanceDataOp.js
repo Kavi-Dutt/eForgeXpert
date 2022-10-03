@@ -3,9 +3,9 @@ const path = require('path')
 const { opendir, readdir, stat } = require('fs/promises');
 const fs =require('fs')
 
-const imagemin = require('imagemin');
-const imageminJpegtran = require('imagemin-jpegtran')
-const imageminPngquant = require('imagemin-pngquant')
+// const imagemin = require('imagemin');
+// const imageminJpegtran = require('imagemin-jpegtran')
+// const imageminPngquant = require('imagemin-pngquant')
 
 // //const colors = require('colors');
 
@@ -40,11 +40,14 @@ exports.ittrateAllImages= async function(sequanceData, sequanceName, htmlPath){
 
     
 }
+/* 
+  -> below code is for comperssing images.
+  -> for now comented because is not wrking in production.
+ */
 
-exports.compressImg =  async function(imgName,htmlPath){
+/* exports.compressImg =  async function(imgName,htmlPath){
   let imgSrcPath = path.join(imgDirPath, imgName)
   imgSrcPath= imgSrcPath.replace(/\\/g, '/');
-//   imgSrcPath= path.normalize(imgSrcPath)
   let distPath = path.join(imgDirPath, '..').replace('/\\/g', '/')
    distPath = distPath.replace(/\\/g, '/')
   console.log(imgSrcPath)
@@ -64,8 +67,4 @@ exports.compressImg =  async function(imgName,htmlPath){
 //      return err
 //  }
  
-    
-    
-
-  
-}
+} */

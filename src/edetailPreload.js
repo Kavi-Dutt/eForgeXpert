@@ -1,4 +1,14 @@
-const {ipcRenderer, contextBridge} = require('electron')
+const {app,ipcRenderer, contextBridge} = require('electron')
+
+let edetailerData={};
+
+// getting sequance data
+(async function(){
+   let data = await ipcRenderer.invoke("preload/request/sequanceData");
+    edetailerData= data;
+    let seqArray =[null,... edetailerData.sequences];
+    contextBridge.exposeInMainWorld('seqArray', seqArray);
+})()
 
 
 const CLMPlayer ={
