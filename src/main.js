@@ -11,12 +11,13 @@ const { opendir, readdir} = require('fs/promises');
 
 // const colors = require('colors')
 
-const mainMenu = require('./mainMenu')
-const {htmlDirectory} = require('./fileToShow')
-const {creatEdetailWindow} = require('./edetailWin')
-const compressFile= require('./compressFiles');
-const sequanceDataOp = require('./sequanceDataOp');
-const capturePage = require('./capturePage')
+const mainMenu = require('./modules/mainMenu');
+const {htmlDirectory} = require('./modules/fileToShow');
+const {creatEdetailWindow} = require('./modules/edetailWin');
+const compressFile= require('./utils/zip/compressFiles');
+const sequanceDataOp = require('./modules/sequanceDataOp');
+const capturePage = require('./utils/image-utils/capturePage');
+const {oceConverter} = require('./utils/file-io/oce-converter');
 
 const emitter = new EventEmitter();
 
@@ -24,7 +25,7 @@ let edetailer,
     edetailerData={},
     edetailWindow
 
-// let mainMenu = Menu.buildFromTemplate(require('./mainMenu'))
+
 
 function createWindow() {
     const display = screen.getAllDisplays()
@@ -49,7 +50,7 @@ function createWindow() {
     //     symbolColor: '#74b1be'
     //   },
     webPreferences: {
-        devTools:false,
+        devTools:true,
         contextIsolation: false,
         nodeIntegration: true,
         webviewTag:true,
@@ -201,6 +202,28 @@ ipcMain.on('request-for-sequenceData',async (e,args)=>{
     e.sender.send('images-from-main', sequanceImages)
     // console.log.log(colors.bgRed(sequanceImages))
 })
+
+// handling reqest for oce conversion
+
+ipcMain.handle('oce-conversion/request',async(e,args)=>{
+    try{
+        await oceConverter.openDialog(mainWindow);
+        e.sender.send('oce-converter/files-slected')
+        await oceConverter.convert(mainWindow);
+        e.sender.send('oce-converter/conversion-succed',{
+            messageType: 'conversion-succed',
+        })
+        oceConverter.resestConverter();
+
+        console.log('waiting for renaming file');
+    }
+   catch(err){
+    e.sender.send('oce-converter/conversion-failed',{
+        messageType: 'conversion-failed',
+    })
+   }
+})
+
 
 /* 
  -> comenting below handler for compersing img

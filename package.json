@@ -2,11 +2,11 @@
   "name": "edetail-editor",
   "version": "1.2.0",
   "description": "edetail editor",
-  "main": "main.js",
+  "main": "src/main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "electron .",
-    "watch": "nodemon --exec electron .",
+    "start": "electron src/main.js",
+    "watch": "nodemon --exec electron src/main.js ",
     "build": "electron-builder --help"
   },
   "nodemonConfig": {

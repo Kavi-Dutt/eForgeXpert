@@ -354,5 +354,99 @@ document.addEventListener('sequanceTableCreated',function(){
 })
 
 
+const oceConverterPopup = document.querySelector('#oce-converter-popup');
+const conversionLogs = document.querySelector('#conversion-logs');
 
+function addConversionLogs(content,msg){
+    let para = createElement('p','conversion-log-txt');
+    para.innerText= content;
+    if(msg.messageType=='info'){
+        para.classList.add('info');
+    }
+    else if(msg.messageType=='success'){
+        para.classList.add('success');
+    }
+    else if(msg.messageType=='addedShared'){
+        para.classList.add('added-shared');
+    }
+    else if(msg.messageType=='error'){
+        para.classList.add('error');
+    }
+    else if(msg.messageType=='conversion-succed'){
+        para.classList.add('conversion-succed');
+    }
+    else if(msg.messageType=='conversion-failed'){
+        para.classList.add('conversion-failed');
+    }
+
+    conversionLogs.appendChild(para);
+}
+
+// adding action on Oce converter btn
+document.querySelector('#OCE-converter_btn').addEventListener('click',function(){
+    console.log('clicked oce converter')
+    ipcRenderer.invoke('oce-conversion/request').then(result=>{
+        console.log(result)
+    }).catch(err=>{
+        console.error(err)
+    })
+})
+
+ipcRenderer.on('oce-converter/files-slected', function(){
+    oceConverterPopup.style.display='block';
+})
+
+ipcRenderer.on('oce-converter/current-folder',function(e,msg){
+    let content = msg.folderName;
+    addConversionLogs(content,msg)
+})
+
+
+ipcRenderer.on('oce-converter/replaced-content-file',function(e,msg){
+    let content = 'successfully replaced content for file ' + msg.fileName;
+    addConversionLogs(content,msg)
+})
+
+
+ipcRenderer.on('oce-converter/added-oce-script',function(e,msg){
+    let content = 'successfully added oce script in ' + msg.folderName;
+    addConversionLogs(content,msg)
+})
+
+ipcRenderer.on('oce-converter/renamed-html-file',function(e,msg){
+    let content = 'successfully renamed html file in ' + msg.folderName;
+    addConversionLogs(content,msg)
+})
+
+ipcRenderer.on('oce-conversion/replaced-thumbnail',function(e,msg){
+    let content = 'successfully replaced thumb image in ' + msg.folderName;
+    addConversionLogs(content,msg)
+})
+
+ipcRenderer.on('oce-conversion/added-shared',function(e,msg){
+    let content = 'successfully added shared in ' + msg.folderName;
+    addConversionLogs(content,msg)
+})
+
+ipcRenderer.on('oce-converter/conversion-succed',function(e,msg){
+    let content = 'successfully converted all files ';
+    addConversionLogs(content,msg);
+    // setTimeout(function(){
+        oceConverterPopup.addEventListener('click',function(e){
+            if(e.target === e.currentTarget){
+                this.style.display= 'none';
+                conversionLogs.innerHTML= '';
+            }
+        })
+    // })
+})
+ipcRenderer.on('oce-converter/conversion-failed',function(e,msg){
+    let content = 'failed to convert files';
+    addConversionLogs(content,msg)
+})
+
+ipcRenderer.on('oce-converter/error',function(e,msg){
+    let content = 'Error ---->' + msg.fileName +'\n' + msg.error ;
+    addConversionLogs(content,msg)
+})
 

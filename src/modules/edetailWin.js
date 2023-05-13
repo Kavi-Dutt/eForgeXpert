@@ -28,7 +28,7 @@ function creatEdetailWindow(dataForWindow) {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
-      preload: path.join(__dirname, 'edetailPreload.js')
+      preload: path.join(__dirname, '..', 'edetailPreload.js')
     }
   })
 
