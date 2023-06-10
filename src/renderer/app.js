@@ -18,6 +18,11 @@ let edetailerData = {},
     thumbImgId, 
     currentSequanceInWebview;
 
+function delay(ms=0) {
+    return new Promise((resolve)=>{
+        setTimeout(resolve, ms);
+    })
+}
 
 
 function edetailURLPath(currentSequanceName) {
@@ -431,14 +436,12 @@ ipcRenderer.on('oce-conversion/added-shared',function(e,msg){
 ipcRenderer.on('oce-converter/conversion-succed',function(e,msg){
     let content = 'successfully converted all files ';
     addConversionLogs(content,msg);
-    // setTimeout(function(){
         oceConverterPopup.addEventListener('click',function(e){
             if(e.target === e.currentTarget){
                 this.style.display= 'none';
                 conversionLogs.innerHTML= '';
             }
         })
-    // })
 })
 ipcRenderer.on('oce-converter/conversion-failed',function(e,msg){
     let content = 'failed to convert files';
@@ -450,3 +453,18 @@ ipcRenderer.on('oce-converter/error',function(e,msg){
     addConversionLogs(content,msg)
 })
 
+
+
+
+// left side pannel script
+const sideButtons = document.querySelectorAll('.left-side_interactions ul li');
+const asideSettingsPannel = document.querySelector('aside .settings-pannel');
+const settingsBlocks = document.querySelectorAll('.settings-pannel div');
+
+sideButtons.forEach((li, index) => {
+    li.addEventListener('click', () => {
+        settingsBlocks.forEach(block=> block.classList.remove('d-flex-important'));
+        asideSettingsPannel.classList.toggle('d-block');
+        settingsBlocks[index].classList.toggle('d-flex-important');
+    })
+})

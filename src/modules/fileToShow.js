@@ -98,11 +98,3 @@ exports.htmlDirectory = {
 }
 
 exports.edetailer = edetailer
-
-
-// async function ls(path) {
-//     const dir = await fs.promises.opendir(path)
-//     for await (const dirent of dir) {
-//         // console.log.log(dirent.name)
-//     }
-// }

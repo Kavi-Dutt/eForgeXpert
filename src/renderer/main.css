@@ -125,6 +125,9 @@ body{
     display: flex;
 
 }
+.d-flex-important{
+    display: flex !important;
+}
 .d-block{
     display: block !important;
 }
@@ -235,13 +238,15 @@ nav .right-nav button#toggle-fullscreen span#back-rect {
 }
 
 main {
-    margin-top: 20px;
+    /* margin-top: 20px; */
+    /* padding-top: 12px; */
     overflow: hidden;
     overflow-y: scroll;
-    padding-top: 12px;
-    height: 93.5%;
+    height: 100%;
+    display: flex;
+    position: relative;
+    z-index: 99;
 }
-
 div.container{
     margin: 0 10px;
 }
@@ -487,12 +492,6 @@ div#webview_left-nav button{
 
 
 
-
-
-
-
-
-
 .pending{
     border: 1px solid #C5C5C5;
     background-color: #1c2da9;
@@ -552,4 +551,58 @@ div#webview_left-nav button{
     font-weight: bold;
     font-size: 16px;
     text-transform: capitalize;
+}
+
+/* css for aside */
+section#display {
+    flex-basis: 100%;
+    margin-top: 20px;
+}
+aside {
+    width: 55px;
+    height: 100%;
+    box-shadow: 0 1px 8px 1px #b3b3b3;
+    background-color: #e9e9e9;
+    position: relative;
+    padding: 20px 0;
+}
+
+aside .left-side_interactions {
+    display: flex;
+    flex-direction: column;
+}
+aside .left-side_interactions ul{
+    display: flex;
+    flex-flow: column;
+    align-items: center;
+}
+
+.left-side_interactions ul li {
+    width: 60%;
+    margin-bottom: 30px;
+    cursor: pointer;
+}
+.left-side_interactions ul li img{
+    width: 100%;
+    height: auto;
+}
+aside .settings-pannel {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 400px;
+    height: 100%;
+    background: #e9e9e9;
+    border: 1px solid #fff;
+    color: black;
+    left: 100%;
+    z-index: 1;
+    display: none;
+}
+
+.settings-pannel>div {
+    width: 100%;
+    height: 50%;
+    /* background-color: #48ff00; */
+    display: none;
 }
