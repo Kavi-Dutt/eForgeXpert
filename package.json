@@ -24,6 +24,7 @@
     "nodemon": "^2.0.15"
   },
   "dependencies": {
+    "archiver": "^5.3.1",
     "electron-window-state": "^5.0.3"
   }
 }

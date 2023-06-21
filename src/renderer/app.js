@@ -1,13 +1,12 @@
 const{ipcRenderer, nativeImage,shell} = require('electron')
 const path = require('path')
+const fs = require('fs');
 const EventEmitter = require('events');
 
 const createImg = require('./createImg');
 const { noDeprecation } = require('process');
 
 const emitter = new EventEmitter();
-
-
 
 const webview = document.querySelector('webview'),
       sequancesDataViewer = document.querySelector('.sequances-data-viewer');
@@ -17,6 +16,46 @@ let edetailerData = {},
     sequanceImg_table, 
     thumbImgId, 
     currentSequanceInWebview;
+
+ // geting settings when those are updated
+
+//  const settingPath = (async ()=> { return await ipcRenderer.invoke('get/settings')})();
+let appSettings;
+(async () => {
+    appSettings = await getAppSettings();
+    console.log(appSettings);
+  })();
+  
+ ipcRenderer.on('settings/updated',async (e)=>{
+    appSettings = await getAppSettings();
+    console.log(appSettings);
+ });
+
+ async function getAppSettings(){
+    const settingPath =  await ipcRenderer.invoke('get/settings');
+    const {settings} = JSON.parse(fs.readFileSync(settingPath));
+    return settings;
+ }
+ 
+// now below two functions are temproray to be updated when thumbnail image setting pannel is ready
+
+ function getThumnailName(){
+    // const thumbnailName = (appSettings.crm === 'oce' ? 'thumb': '01_thumbnail') + '.' +  getThumbnailFormat();
+    const thumbnailName = (appSettings.thumbnailName ? appSettings.thumbnailName : 'thumb')+'.'+(appSettings.thumbnailFormat ? appSettings.thumbnailFormat : 'png');
+    return thumbnailName;
+ }
+
+ function generateThumnail(args){
+    const width = appSettings.thumbnailWidth ? Number(appSettings.thumbnailWidth) : 1024;
+    const height = appSettings.thumbnailHeight ? Number(appSettings.thumbnailHeight) : 768;
+    if(appSettings.thumbnailFormat === 'png'){
+        return createImg.toPNG(args.screenshot, {imgWidth:width, imgHeight:height});
+    }
+    else if(appSettings.thumbnailFormat === 'jpg'){
+        return createImg.toJPEG(args.screenshot, {imgWidth:width, imgHeight:height});
+    }
+ }
+
 
 function delay(ms=0) {
     return new Promise((resolve)=>{
@@ -76,13 +115,15 @@ function createDataTable(edetailerData) {
             // thumb image
             let thumbImgContainer = createElement('div','thumb-img-container')
             let thumbImg = createElement('img','thumb-img')
-            imgSrc =`${sequanceURL(slideName)}\\01_thumbnail.jpg`
-            thumbImg.src= imgSrc
+            thumbImg.src =`${sequanceURL(slideName)}\\${getThumnailName()}`
+
+            // thumbImg.src= imgSrc
 
 
             let sequanceNameContainer = createElement('div','sequance-name_container')
-            let sequanceNamePara = createElement('p',null)
+            let sequanceNamePara = createElement('p', 'sequance-name_text')
             sequanceNamePara.innerText =slideName;
+            sequanceNamePara.setAttribute('contenteditable', '');
             sequanceNamePara.id= slideName;
 
             let btnContainer =createElement('div','btn-container')
@@ -129,15 +170,13 @@ function createDataTable(edetailerData) {
                 ipcRenderer.on('response-for-screenshot',(e,args)=>{
 
                     // createing thumb image
-                let imgJPEG = createImg.toJPEG(args.screenshot,{imgWidth:328, imgHeight:232})
-
-                
+                let thumbnailImg = generateThumnail(args);
 
                 //    saveing jpeg thumbimage
                     createImg.saveImg({
-                        data: imgJPEG,
-                        fileName: '01_thumbnail',
-                        ext:'jpg',
+                        data: thumbnailImg,
+                        fileName: appSettings.thumbnailName ? appSettings.thumbnailName : 'thumb',
+                        ext: appSettings.thumbnailFormat ? appSettings.thumbnailFormat : 'png',
                         saveToPath: sequanceURL(thumbImgId)
                     })
                     this.innerText ="Done"
@@ -146,7 +185,7 @@ function createDataTable(edetailerData) {
                         btn.style.pointerEvents ="auto";
                     })
                     document.querySelector(".all-sequances").style.cursor="auto";
-                    // console.log(imgJPEG)
+                    // console.log(thumbnailImg)
                 })
 
                 
@@ -230,10 +269,7 @@ function createDataTable(edetailerData) {
 
 // creating event on creation of table
 const sequanceTableCreatedEvent = new Event('sequanceTableCreated');
-    console.log(edetailerData);
-
     document.dispatchEvent(sequanceTableCreatedEvent)
-
 }
 
 
@@ -459,12 +495,12 @@ ipcRenderer.on('oce-converter/error',function(e,msg){
 // left side pannel script
 const sideButtons = document.querySelectorAll('.left-side_interactions ul li');
 const asideSettingsPannel = document.querySelector('aside .settings-pannel');
-const settingsBlocks = document.querySelectorAll('.settings-pannel div');
+const settingsBlocks = document.querySelectorAll('.settings-pannel>div');
 
 sideButtons.forEach((li, index) => {
     li.addEventListener('click', () => {
-        settingsBlocks.forEach(block=> block.classList.remove('d-flex-important'));
+        settingsBlocks.forEach(block=> block.classList.remove('d-block'));
         asideSettingsPannel.classList.toggle('d-block');
-        settingsBlocks[index].classList.toggle('d-flex-important');
+        settingsBlocks[index].classList.toggle('d-block');
     })
 })

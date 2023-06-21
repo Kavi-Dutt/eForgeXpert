@@ -7,7 +7,7 @@ const EventEmitter = require('events');
 
 const { opendir, readdir } = require('fs/promises');
 // const colors = require('colors')
-const handleSequnce = require('./fileToShow');
+const handleSequnce = require('./OCE_fileToShow');
 let edetailWindow;
 let edetailWindowMenu = Menu.buildFromTemplate(require('./edetailWindowMenu'))
 

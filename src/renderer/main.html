@@ -14,7 +14,7 @@
         <div class="left-nav">
             <button id="open-side-pannel"><span>&#9776;</span></button>
             <button><span>File</span></button>
-            <button id="add-project_btn"><span>Add</span></button>
+            <!-- <button id="add-project_btn"><span>Add</span></button> -->
             <button><span>View</span></button>
             <button><span>Help</span></button>
             <button id="OCE-converter_btn"><span>OCE Converter</span></button>
@@ -37,32 +37,128 @@
             <div class="left-side_interactions">
                 <ul class="left-side_interactions_list-1">
                     <li>
-                        <img src="./img/add-folder.svg" alt="">
+                        <img src="./img/add-folder.svg" alt="" title="Add folder">
                     </li>
+                    <li><img src="./img/zip-file.svg" alt="" title="Zip folders"></li>
+
+                    <li><img src="./img/image.svg" alt="" title="Edit images" ></li>
                     <li>
                         <img src="./img/setting.svg" alt="">
                     </li>
-                    <li></li>
-                    <li></li>
                 </ul>
             </div>
             <div class="settings-pannel">
-                <div>add folders</div>
-                <div id="general-settigs_container">
-                    <form id="general-seeting_form">
-                            <div class=" form-group crm-group">
-                                CRM
+                <div id="folder-setting_container"  >
+                    <div class="setting-wrap">
+                        <div class="config-project_form-container">
+                            <form action="" id="config-project_form">
                                 <p>
-                                    <label for="veeva">Veeva</label>
-                                    <input type="radio" name="crm" id="veeva" value="veeva">
-                                    <label for="oce">OCE</label>
-                                    <input type="radio" name="crm" id="oce" value="OCE">
+                                    <label for="projectID">project id</label>
+                                    <input type="text" name="projectID" value="project" id="projectID">
                                 </p>
-                            </div>
-                    </form>
+                                <div class="crm-specfic-setting">
+                                    <p>
+                                        <label for="has-shared">Has Shared: </label>
+                                        <input type="checkbox" name="hasShared" id="has-shared" value="shared">
+                                    </p>
+                                    <p>
+                                        <label for="is-multichannel">MultiChannel Persentation:  </label>
+                                        <input type="checkbox" name="is-multichannel" id="is-multichannel">
+                                    </p>
+                                </div>
+                            </form>
+                        </div>
+                        <!-- <div class="form-group add-project-group">
+                        </div> -->
+                    </div>
+                    <button id="add-project_btn" type="button" class="btn-type-3 add-project">Add Project</button>
+                    <!-- <p class="foldericon-heading setting-group-label"><span>Add files</span> -->
+                    </p>
                 </div>
-                <div></div>
-                <div></div>
+                <div id="zip-setting_container" >
+                    <div class="setting-wrap">
+                        <form id="general-zipicon_form">
+                            <div class=" form-group crm2-group">
+                                <p class="zipicon-heading setting-group-label">Zip all</p>
+                                <div>
+                                    <label for="shared" class="zipicon-label1">Shared</label>
+                                    <input type="radio" name="crm2" id="Zipicon1" value="shared"class="zipicon-input1" >
+                                    <label for="without_shared"  class="zipicon-label2">Without Shared</label>
+                                    <input type="radio" name="crm2" id="Zipicon2" value="without_shared">
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div id="thumbnail-setting_container">
+                    <div class="setting-wrap">
+                      <form id="thumbnail-setting-form">
+                        <div class="form-group">
+                            <p class="setting-group-label">Thumbnail Name</p>
+                            <div>
+                             <p>
+                                  <label for="thumbnail-name" class="thumbnail-size-label">Name:</label>
+                                  <input type="text" name="thumbnail-name" id="thumbnail-name" class="thumbnail-name-input">                                                            
+                             </p>
+                            </div>
+                          </div>
+                        <div class="form-group">
+                          <p class="setting-group-label">Thumbnail Format</p>
+                          <div>
+                            <label for="thumbnail-format-jpg" class="thumbnail-format-label">
+                              <input type="radio" name="thumbnail-format" id="thumbnail-format-jpg" value="jpg" class="thumbnail-format-input">
+                              JPG
+                            </label>
+                            <label for="thumbnail-format-png" class="thumbnail-format-label">
+                              <input type="radio" name="thumbnail-format" id="thumbnail-format-png" value="png" class="thumbnail-format-input">
+                              PNG
+                            </label>
+                          </div>
+                        </div>
+                        <div class="form-group">
+                          <p class="setting-group-label">Thumbnail Size</p>
+                          <div>
+                            <p>
+                                <label for="thumbnail-width" class="thumbnail-size-label">Width:</label>
+                                <input type="number" name="thumbnail-width" id="thumbnail-width" class="thumbnail-size-input">
+                            </p>
+                           <p>
+                                <label for="thumbnail-height" class="thumbnail-size-label">Height:</label>
+                                <input type="number" name="thumbnail-height" id="thumbnail-height" class="thumbnail-size-input">                                                            
+                           </p>
+                          </div>
+                        </div>
+                        <button id="save-thumbnail-settings" class=" save-setting btn-type-3">Save</button>
+                      </form>
+                    </div>
+                  </div>
+                  
+                <div id="general-settings_container" class="general-settings">
+                    <div class="setting-wrap">
+                        <form id="general-setting_form">
+                            <div class=" form-group crm-group">
+                                <p class="seetingicon-heading setting-group-label">CRM</p>
+                                <div>
+                                    <label for="veeva-radio" class="seetingicon-label1">Veeva</label>
+                                    <input type="radio" name="crm" id="veeva-radio" value="veeva"class="seetingicon-input1" >
+                                    <label for="oce-radio"  class="seetingicon-label2">OCE</label>
+                                    <input type="radio" name="crm" id="oce-radio" value="OCE">
+                                </div>
+                            </div>
+                            
+                            <div class="from-group build-with-group">
+                                <p class="setting-group-label">Build With</p>
+                                <!-- <label for="build-with select-laber"></label> -->
+                                <select name="build-with" id="select_build-with">
+                                    <option value="beSpoke">Be Spoke</option>
+                                    <option value="dspTool">DSP Tool</option>
+                                </select>
+                            </div>
+
+                            <button id="save-general-setting" class="save-setting btn-type-3">Save</button>
+                    </form>
+                    </div>
+                </div>
             </div>
         </aside>
         <section id="display">
@@ -143,8 +239,9 @@
     </section>
 </body>
 <script>
-    require('./app')
-    require('./view')
+    require('./settings');
+    require('./app');
+    require('./view');
     require('./menueRnderer')
 </script>
 

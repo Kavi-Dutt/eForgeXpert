@@ -12,34 +12,21 @@ const archiver = require('archiver');
  * @param {string} outputPath - The output path for the compressed ZIP file.
  * @returns {Promise} A Promise that resolves when the zipping is completed successfully or rejects if an error occurs.
  */
+function compress(directoryPath) {
+  return new Promise((resolve, reject) => {
+    const output = fs.createWriteStream(`${__dirname}folder.zip`)
+    output.on('close', resolve)
+    output.on('end', resolve)
 
-function compress(sequences, htmlPath, outputPath) {
-  const slideNames = Array.isArray(sequences) ? sequences : [sequences];
+    const archive = archiver('zip')
+    archive.on('error', reject)
+    archive.on('warning', reject)
+    archive.pipe(output)
 
-  const promises = slideNames.map((sequence) => {
-    return new Promise((resolve, reject) => {
-      const output = fs.createWriteStream(path.join(outputPath, `${sequence}.zip`));
-      output.on('close', resolve);
-      output.on('end', resolve);
-
-      const archive = archiver('zip');
-      archive.on('error', reject);
-      archive.on('warning', reject);
-      archive.pipe(output);
-
-      const slidePath = path.join(htmlPath, sequence);
-      archive.glob(
-        '**/*', {
-            cwd: slidePath,
-            ignore: ['shared/**', 'shared'],
-            // follow: fs.constants.FOLLOW_SYMLINKS,
-        }
-      );
-      archive.finalize();
-    });
-  });
-
-  return Promise.all(promises);
+    archive
+      .directory(__dirname, false)
+      .finalize()
+  })
 }
 
 
