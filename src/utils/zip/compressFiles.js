@@ -102,41 +102,41 @@ return string
 
 
 // compressing  all files
-compressAllFiles = async function(sequanceArray, htmlPath){
-  return new Promise (async (resolve, reject)=>{
-    let replacedCharSequanceArray= []
-    let execCompress = await new Promise (resolve=>{
-      let childProcess = exec(`
-      $htmlPath ="${htmlPath}"
-      $arr = @(Get-ChildItem -Path $htmlPath  -Name)
-foreach ($item in $arr) {
-    Write-Host " $i : $item"
-    Compress-Archive -Path $htmlPath\\$item\\* -DestinationPath $htmlPath\\"$item".zip -Force
-}`,{'shell':'powershell.exe'}, (err, stdout, stderr) => {
-        if (err) {
-            reject(err)
-          // console.log.error(`exec error: ${err}`);
-          return;
-        }
-      // console.log.log('file compressed')
-    });
+// commenting it as is replcased by compress function
+// compressAllFiles = async function(sequanceArray, htmlPath){
+//   return new Promise (async (resolve, reject)=>{
+//     let replacedCharSequanceArray= []
+//     let execCompress = await new Promise (resolve=>{
+//       let childProcess = exec(`
+//       $htmlPath ="${htmlPath}"
+//       $arr = @(Get-ChildItem -Path $htmlPath  -Name)
+// foreach ($item in $arr) {
+//     Write-Host " $i : $item"
+//     Compress-Archive -Path $htmlPath\\$item\\* -DestinationPath $htmlPath\\"$item".zip -Force
+// }`,{'shell':'powershell.exe'}, (err, stdout, stderr) => {
+//         if (err) {
+//             reject(err)
+//           // console.log.error(`exec error: ${err}`);
+//           return;
+//         }
+//       // console.log.log('file compressed')
+//     });
     
-    childProcess.on('exit',()=>{
-      mainWindow.webContents.send('on-compressing-all','done')
-      resolve('compressed')
-    })
+//     childProcess.on('exit',()=>{
+//       mainWindow.webContents.send('on-compressing-all','done')
+//       resolve('compressed')
+//     })
      
-    })
-  // }
-  resolve('compressed all')
-})
+//     })
+//   // }
+//   resolve('compressed all')
+// })
 
   
-}
+// }
 
 
 module.exports = {
   compress,
-  compressAllFiles,
   replaceCharacters
 }

@@ -2,7 +2,7 @@ const { app, ipcMain, dialog, nativeImage } = require('electron');
 const path = require('path');
 const { readFile, readdir,mkdir, rename, writeFile, cp, unlink } = require('fs/promises')
 const fs = require('fs')
-const colors = require('colors');
+// const colors = require('colors');
 exports.oceConverter = {
     isFoldersSelected: false,
     sequenceFolders: null,
@@ -54,13 +54,13 @@ function convert(browserWindow) {
                 const currentFolder = path.basename(sequencePath);
                 try {
                     const files = await readdir(sequencePath);
-                    console.log(colors.yellow(currentFolder));
+                    // console.log(colors.yellow(currentFolder));
                     browserWindow.webContents.send('oce-converter/current-folder',{
                         folderName: currentFolder,
                         messageType: 'info'
                     })
                     for (const file of files) {
-                        console.log(colors.green(` ${file}`));
+                        // console.log(colors.green(` ${file}`));
 
                         if (path.extname(file) == '.html' || path.extname(file) == '.css' || path.extname(file) == '.js') {
                             try{

@@ -23,56 +23,32 @@ function openDialog(browserWindow) {
     })
 }
 
-async function putShared(browserWindow, edetailerData, sharedPath) {
-    const htmlPath = edetailerData.htmlPath;
-    try {
-      for (const sequence of edetailerData.sequences) {
-        const sequencePath = path.join(htmlPath, sequence);
-        const currentFolder = path.basename(sequencePath);
+// async function putShared(browserWindow, edetailerData, sharedPath) {
+//     const htmlPath = edetailerData.htmlPath;
+//     try {
+//       for (const sequence of edetailerData.sequences) {
+//         const sequencePath = path.join(htmlPath, sequence);
+//         const currentFolder = path.basename(sequencePath);
   
-        const newShared = path.join(sequencePath, 'shared');
-        console.log(`sequancePath:${sequencePath}`);
-        await fsPromises.mkdir(newShared, {recursive:true});
-        await fsPromises.cp(sharedPath, newShared, {recursive:true});
+//         const newShared = path.join(sequencePath, 'shared');
+//         console.log(`sequancePath:${sequencePath}`);
+//         await fsPromises.mkdir(newShared, {recursive:true});
+//         await fsPromises.cp(sharedPath, newShared, {recursive:true});
   
-        console.log(`Shared successfully placed inside ${sequencePath}`);
-        browserWindow.webContents.send('oce-conversion/added-shared', {
-          folderName: currentFolder,
-          messageType: 'addedShared',
-        });
-      }
+//         console.log(`Shared successfully placed inside ${sequencePath}`);
+//         browserWindow.webContents.send('oce-conversion/added-shared', {
+//           folderName: currentFolder,
+//           messageType: 'addedShared',
+//         });
+//       }
   
-      return 'Successfully converted all the files';
-    } catch (error) {
-      console.error(error);
-      throw error;
-    }
-  }
+//       return 'Successfully converted all the files';
+//     } catch (error) {
+//       console.error(error);
+//       throw error;
+//     }
+//   }
 
-  // async function putShared(browserWindow, edetailerData, sharedPath) {
-  //   const htmlPath = edetailerData.htmlPath;
-  //   try {
-  //     for (const sequence of edetailerData.sequences) {
-  //       const sequencePath = path.join(htmlPath, sequence);
-  //       const currentFolder = path.basename(sequencePath);
-  
-  //       const newShared = path.join(sequencePath, 'shared');
-  //       await fsPromises.mkdir(newShared, { recursive: true });
-  //       await fsPromises.symlink(sharedPath, newShared, 'junction');
-  
-  //       console.log(`Shared symbolic link successfully created inside ${sequencePath}`);
-  //       browserWindow.webContents.send('oce-conversion/added-shared', {
-  //         folderName: currentFolder,
-  //         messageType: 'addedShared',
-  //       });
-  //     }
-  
-  //     return 'Successfully converted all the files';
-  //   } catch (error) {
-  //     console.error(error);
-  //     throw error;
-  //   }
-  // }
 
   async function putShared(browserWindow, edetailerData, sharedPath) {
     const htmlPath = edetailerData.htmlPath;

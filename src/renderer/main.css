@@ -13,6 +13,10 @@ img{
     vertical-align: bottom;
 }
 
+.disable{
+    pointer-events: none !important;
+    opacity: 0.5 !important;
+}
 button{
     border: none;
     background-color: transparent;
@@ -660,3 +664,6 @@ button.add-project {
     display: none;
 }
 /* add project css ends */
+
+#folder-setting_container{}
+#folder-setting_container{}

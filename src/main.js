@@ -8,7 +8,7 @@ const { exec } = require('child_process');
 const { opendir, readdir } = require('fs/promises');
 
 
-
+const isDev = require('electron-is-dev');
 // const colors = require('colors')
 
 const mainMenu = require('./modules/mainMenu');
@@ -18,9 +18,10 @@ const compressFile = require('./utils/zip/compressFiles');
 const sequanceDataOp = require('./modules/sequanceDataOp');
 const capturePage = require('./utils/image-utils/capturePage');
 const { oceConverter } = require('./utils/file-io/oce-converter');
-const Store = require('./store');
-const {placeShared} = require('./utils/file-io/place-shared');
+const Store = require('./utils/store/setting');
+const { placeShared } = require('./utils/file-io/place-shared');
 const fileSystemUtils = require('./utils/file-io/fileSystemUtils');
+const { Recent } = require('./utils/store/recent-projects')
 const emitter = new EventEmitter();
 
 let edetailer,
@@ -83,15 +84,23 @@ function createWindow() {
         }
     ])
 
-    mainWindow.loadFile('renderer/main.html')
-
+    // mainWindow.loadFile('renderer/main.html')
+    if (isDev) {
+        // Development mode: Load the file directly from the file system
+        mainWindow.loadFile('renderer/main.html');
+    } else {
+        // Production mode: Load the file from the packaged app
+        mainWindow.loadURL(`file://${path.join(__dirname, 'renderer', 'main.html')}`);
+    }
     ipcMain.on('sequancesDataHolder/contextmenu', (e, args) => {
         contextMenuSequanceDataHolder.popup()
         contextMenuSequanceDataHolder.getMenuItemById('vscode').click = () => openInVsCode(args)
     })
 
-    let userDataPath = app.getPath('userData');
+    const userDataPath = app.getPath('userData');
+    ipcMain.handle('get/userDataPath',()=> userDataPath);
 
+    // settings for app
     const appSettings = new Store({
         confingName: 'user-settings',
         defaults: {
@@ -106,8 +115,6 @@ function createWindow() {
         }
     });
 
-
-
     //listening for get/setting request
     ipcMain.handle('get/settings', () => {
         return appSettings.path;
@@ -117,25 +124,39 @@ function createWindow() {
         appSettings.set('settings', value);
         BrowserWindow.getAllWindows().forEach(window => {
             window.webContents.send('settings/updated');
-            console.log('xskdfidlwed');
         });
-        // console.log(appSettings);
     });
+
+
+    // recent folders added
+    const veevaRecents = new Recent({ fileName: 'veevaRecent' });
+    const oceRecents = new Recent({ fileName: 'oceRecent' });
+
 
     // loading and storing files in HTML folder
     mainWindow.webContents.on('did-finish-load', () => {
-        ipcMain.on('open-dialog-trigerd', async (e, args) => {
-
+        ipcMain.on('open-dialog-trigerd', async (e, recentData) => {
+            console.log(recentData)
             // closeing edetailWindow before adding anothers project
             if (!edetailWindow?.isDestroyed()) {
                 if (edetailWindow)
                     edetailWindow.close();
             }
-            
-            try{
+
+            try {
                 let selectedHTMLPath = await htmlDirectory.openDialog(mainWindow);
-                if(appSettings.get('settings.crm')==='veeva' && !(appSettings.get('settings.buildWith') ==='dspTool')){
-                   slectedSharedPath = await placeShared.openDialog(mainWindow);
+
+                recentData.path = selectedHTMLPath;
+
+                if (appSettings.get('settings.crm') === 'veeva') {
+                    if (!(appSettings.get('settings.buildWith') === 'dspTool') && recentData.hasShared) {
+                        slectedSharedPath = await placeShared.openDialog(mainWindow);
+                    }
+                    recentData.sharedPath = slectedSharedPath
+                    veevaRecents.addProject(recentData);
+
+                } else if (appSettings.get('settings.crm') === 'oce') {
+                    oceRecents.addProject(recentData);
                 }
 
                 htmlDirectory.getProjectFiles(selectedHTMLPath).then((result) => {
@@ -143,22 +164,21 @@ function createWindow() {
                     emitter.emit('filesLoaded');
                 }).catch((err) => console.log(err));
             }
-            catch(err){
+            catch (err) {
                 console.log(err);
             }
-           
+
         })
     })
 
     // parsing and sending data to renderer and open edetail window function
-   async function openEdetailWindow() {
+    async function openEdetailWindow() {
         try {
             edetailerData = fs.readFileSync(path.join(userDataPath, 'oce-data', 'edetailerData.json'));
             edetailerData = JSON.parse(edetailerData);
-            if(appSettings.get('settings.crm')==='veeva' && !(appSettings.get('settings.buildWith')==='dspTool')){
-               await placeShared.putShared(mainWindow, edetailerData, slectedSharedPath);
-             }
-            // console.log(colors.red(edetailerData))
+            if (appSettings.get('settings.crm') === 'veeva' && !(appSettings.get('settings.buildWith') === 'dspTool')) {
+                await placeShared.putShared(mainWindow, edetailerData, slectedSharedPath);
+            }
             if (mainWindow.webContents.isLoading()) {
                 mainWindow.webContents.on('dom-ready', () => {
                     mainWindow.webContents.send('data-from-main', edetailerData);
@@ -183,7 +203,6 @@ function createWindow() {
         }
         else {
             openEdetailWindow();
-            console.log("esist");
         }
     })
 
@@ -213,7 +232,6 @@ function createWindow() {
         else {
             mainWindow.maximize()
         }
-        // // console.log.log('fullScreen')
     })
 
 
@@ -229,25 +247,22 @@ function createWindow() {
     ipcMain.handle('request-for-compress', async (e, args) => {
         // creating a directory for storing compressed files
 
-       let zipFolderPath= await fileSystemUtils.createDirectory(path.resolve(edetailerData.htmlPath, '..'), 'zips');
+        let zipFolderPath = await fileSystemUtils.createDirectory(path.resolve(edetailerData.htmlPath, '..'), 'zips');
         let execCompress = await compressFile.compress(args, edetailerData.htmlPath, zipFolderPath);
-        // console.log.log('done')
         return ('Done')
     })
 
     // handling request for compressing all files
     ipcMain.handle('request-for-compressAll', async (e, args) => {
-       let zipFolderPath= await fileSystemUtils.createDirectory(path.resolve(edetailerData.htmlPath, '..'), 'zips');
-        let compressAllFiles = await compressFile.compress(edetailerData.sequences, edetailerData.htmlPath,zipFolderPath);
+        let zipFolderPath = await fileSystemUtils.createDirectory(path.resolve(edetailerData.htmlPath, '..'), 'zips');
+        let compressAllFiles = await compressFile.compress(edetailerData.sequences, edetailerData.htmlPath, zipFolderPath);
         return compressAllFiles
     })
 
     ipcMain.on('request-for-sequenceData', async (e, args) => {
         let sequanceData = edetailerData.filesInSequence[args]
-        // console.log.log(colors.bgGreen.yellow(sequanceData))
         let sequanceImages = await sequanceDataOp.ittrateAllImages(sequanceData, args, edetailerData.htmlPath)
         e.sender.send('images-from-main', sequanceImages)
-        // console.log.log(colors.bgRed(sequanceImages))
     })
 
     // handling reqest for oce conversion
@@ -262,7 +277,6 @@ function createWindow() {
             })
             oceConverter.resestConverter();
 
-            console.log('waiting for renaming file');
         }
         catch (err) {
             e.sender.send('oce-converter/conversion-failed', {
@@ -284,7 +298,6 @@ function createWindow() {
 
     ipcMain.on('request-for-screenshot', (e, args) => {
         capturePage(args, screenshot => {
-            // console.log.log(screenshot)
             e.sender.send('response-for-screenshot', screenshot)
         })
 

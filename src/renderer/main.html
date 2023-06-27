@@ -53,27 +53,28 @@
                         <div class="config-project_form-container">
                             <form action="" id="config-project_form">
                                 <p>
-                                    <label for="projectID">project id</label>
-                                    <input type="text" name="projectID" value="project" id="projectID">
+                                    <label for="projectID-input">project id</label>
+                                    <input type="text" name="projectID" value="" id="projectID-input">
                                 </p>
                                 <div class="crm-specfic-setting">
                                     <p>
-                                        <label for="has-shared">Has Shared: </label>
-                                        <input type="checkbox" name="hasShared" id="has-shared" value="shared">
+                                        <label for="has-shared-checkbox">Has Shared: </label>
+                                        <input type="checkbox" name="hasShared" id="has-shared-checkbox" value="shared">
                                     </p>
-                                    <p>
+                                    <p class="disable">
                                         <label for="is-multichannel">MultiChannel Persentation:  </label>
                                         <input type="checkbox" name="is-multichannel" id="is-multichannel">
                                     </p>
                                 </div>
                             </form>
                         </div>
-                        <!-- <div class="form-group add-project-group">
-                        </div> -->
                     </div>
-                    <button id="add-project_btn" type="button" class="btn-type-3 add-project">Add Project</button>
-                    <!-- <p class="foldericon-heading setting-group-label"><span>Add files</span> -->
-                    </p>
+                    <button id="add-project_btn" type="button" class="btn-type-3 add-project disable">Add Project</button>
+                    <div class="recent-projects">
+                        <div class="container">
+                            
+                        </div>
+                    </div>
                 </div>
                 <div id="zip-setting_container" >
                     <div class="setting-wrap">
@@ -237,12 +238,14 @@
     <section id="oce-converter-popup">
         <div id="conversion-logs"></div>
     </section>
+    <div></div>
 </body>
 <script>
-    require('./settings');
+    require('./modules/settings');
     require('./app');
-    require('./view');
-    require('./menueRnderer')
+    require('./project-handler/add-folder');
+    require('./project-handler/generate-view')
+    require('./modules/menueRnderer.js');
 </script>
 
 </html>

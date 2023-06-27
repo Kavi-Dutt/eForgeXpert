@@ -40,6 +40,7 @@ async function openDialog(windowName) {
                 reject('no slection');
             }
             ipcMain.removeHandler('open-dialog');
+            return 'dialog opened';
         })
     })
 }

@@ -3,8 +3,7 @@ const path = require('path')
 const fs = require('fs');
 const EventEmitter = require('events');
 
-const createImg = require('./createImg');
-const { noDeprecation } = require('process');
+const createImg = require('./modules/createImg');
 
 const emitter = new EventEmitter();
 
@@ -23,12 +22,10 @@ let edetailerData = {},
 let appSettings;
 (async () => {
     appSettings = await getAppSettings();
-    console.log(appSettings);
   })();
   
  ipcRenderer.on('settings/updated',async (e)=>{
     appSettings = await getAppSettings();
-    console.log(appSettings);
  });
 
  async function getAppSettings(){
@@ -78,11 +75,6 @@ function removeClass(element,className){
     
 getHtmlFile = (sequanceName) => {
     return edetailerData.filesInSequence[sequanceName].filter((html) => html.match(/.*\.(html?)/ig))[0]
-}
-
-function openDilog() {
-    ipcRenderer.send('open-dialog-trigerd')
-    ipcRenderer.invoke('open-dialog').then((result) => console.log(result))
 }
 
 function changeWebviewSrc(sequanceName) {
@@ -301,12 +293,6 @@ function createImgsTable(args,sequanceName){
     
     return sequanceImg_table
 }
-
-
-// sending ipc message on click of add project btn (currently in navigation bar)
-document.querySelector('#add-project_btn').addEventListener('click', openDilog)
-
-
 // btn which will focus on edetailWindow
 let fullscreenBtn=document.querySelector('.fullscreen-btn')
 fullscreenBtn.addEventListener('click',function(){
