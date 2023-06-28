@@ -53,31 +53,33 @@ function openDialog(browserWindow) {
   async function putShared(browserWindow, edetailerData, sharedPath) {
     const htmlPath = edetailerData.htmlPath;
     try {
-      for (const sequence of edetailerData.sequences) {
-        const sequencePath = path.join(htmlPath, sequence);
-        const currentFolder = path.basename(sequencePath);
-    
-        const newShared = path.join(sequencePath, 'shared');
-    
-        // Check if the symlink already exists
-        try {
-          await fsPromises.lstat(newShared);
-          console.log(`Shared symlink already exists in ${sequencePath}`);
-          continue; // Skip creating the symlink
-        } catch (error) {
-          // Symlink does not exist, proceed with creation
-          // await fsPromises.mkdir(newShared, { recursive: true });
-          await fsPromises.symlink(sharedPath, newShared, 'dir');
-          console.log(`Shared successfully placed inside ${sequencePath}`);
+      if(edetailerData && sharedPath){
+        for (const sequence of edetailerData.sequences) {
+          const sequencePath = path.join(htmlPath, sequence);
+          const currentFolder = path.basename(sequencePath);
+      
+          const newShared = path.join(sequencePath, 'shared');
+      
+          // Check if the symlink already exists
+          try {
+            await fsPromises.lstat(newShared);
+            console.log(`Shared symlink already exists in ${sequencePath}`);
+            continue; // Skip creating the symlink
+          } catch (error) {
+            // Symlink does not exist, proceed with creation
+            // await fsPromises.mkdir(newShared, { recursive: true });
+            await fsPromises.symlink(sharedPath, newShared, 'dir');
+            console.log(`Shared successfully placed inside ${sequencePath}`);
+          }
+      
+          browserWindow.webContents.send('oce-conversion/added-shared', {
+            folderName: currentFolder,
+            messageType: 'addedShared',
+          });
         }
-    
-        browserWindow.webContents.send('oce-conversion/added-shared', {
-          folderName: currentFolder,
-          messageType: 'addedShared',
-        });
+      
+        return 'Successfully converted all the files';
       }
-    
-      return 'Successfully converted all the files';
     } catch (error) {
       console.error(error);
       throw error;

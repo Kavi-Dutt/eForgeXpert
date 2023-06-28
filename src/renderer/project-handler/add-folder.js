@@ -1,6 +1,5 @@
 const { ipcRenderer } = require('electron');
-const fs = require('fs');
-
+const{getAppSettings} = require('../utils/getSettings');
 let appSettings;
 (async () => {
     appSettings = await getAppSettings();
@@ -10,11 +9,11 @@ ipcRenderer.on('settings/updated', async (e) => {
     appSettings = await getAppSettings();
 });
 
-async function getAppSettings() {
-    const settingPath = await ipcRenderer.invoke('get/settings');
-    const { settings } = JSON.parse(fs.readFileSync(settingPath));
-    return settings;
-}
+// async function getAppSettings() {
+//     const settingPath = await ipcRenderer.invoke('get/settingsPath');
+//     const { settings } = JSON.parse(fs.readFileSync(settingPath));
+//     return settings;
+// }
 document.addEventListener('DOMContentLoaded', () => {
     // add folder setting
     const projectIdInput = document.querySelector('#projectID-input');
@@ -55,3 +54,4 @@ function openDilog(options) {
     ipcRenderer.send('open-dialog-trigerd', options)
     ipcRenderer.invoke('open-dialog').then((result) => console.log(result))
 }
+

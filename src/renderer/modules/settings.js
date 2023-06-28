@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const thumbnailHeightInput = document.querySelector('#thumbnail-height');
   const thumbnailNameInput = document.querySelector('#thumbnail-name');
 
-  const settingPath = await ipcRenderer.invoke('get/settings');
+  const settingPath = await ipcRenderer.invoke('get/settingsPath');
   const { settings } = JSON.parse(fs.readFileSync(settingPath));
 
   // General Settings

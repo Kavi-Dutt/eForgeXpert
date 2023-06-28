@@ -15,7 +15,6 @@ const {
     get
 } = require('http');
 const pathToDDrive = path.join('D:\\');
-const crmEnv = "veeva";
 
 
 let projectFolders, sequancePath;
@@ -46,13 +45,12 @@ async function openDialog(windowName) {
 }
 
 // async
-async function getProjectFiles(selectedPath) {
-    if (crmEnv === "veeva") {
+async function getProjectFiles(selectedPath, sharedPath) {
         return new Promise(async (resolve, reject) => {
-            // console.log.log(colors.bgMagenta(selectedPath))
             projectFolders = selectedPath.split('\\');
             let drive = projectFolders.shift()
             //    adding drvie name to edetailer object
+            sharedPath ? edetailer.sharedPath = sharedPath : '';
             edetailer.drive = drive;
             let lastFolder = projectFolders[projectFolders.length - 1]
             // console.log.log(colors.magenta(projectFolders))
@@ -77,11 +75,10 @@ async function getProjectFiles(selectedPath) {
             // }
         })
 
-    }
 }
 
 function getFilesInSequnecs(result) {
-    edetailer = result
+    edetailer = result;
     edetailer.filesInSequence = {};
     let sequenceList = edetailer.sequences;
     sequenceList.forEach(sequanceName => {
@@ -119,8 +116,6 @@ function getFilesInSequnecs(result) {
     // console.log.log(colors.brightYellow(edetailer))
     // // console.log.log(edetailer.filesInSequence[sequanceName].filter((html)=>html.match(/.*\.(html?)/ig)))
 }
-
-
 
 
 exports.htmlDirectory = {

@@ -18,7 +18,7 @@ let edetailerData = {},
 
  // geting settings when those are updated
 
-//  const settingPath = (async ()=> { return await ipcRenderer.invoke('get/settings')})();
+//  const settingPath = (async ()=> { return await ipcRenderer.invoke('get/settingsPath')})();
 let appSettings;
 (async () => {
     appSettings = await getAppSettings();
@@ -29,7 +29,7 @@ let appSettings;
  });
 
  async function getAppSettings(){
-    const settingPath =  await ipcRenderer.invoke('get/settings');
+    const settingPath =  await ipcRenderer.invoke('get/settingsPath');
     const {settings} = JSON.parse(fs.readFileSync(settingPath));
     return settings;
  }

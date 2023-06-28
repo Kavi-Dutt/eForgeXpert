@@ -116,22 +116,52 @@ function createWindow() {
     });
 
     //listening for get/setting request
-    ipcMain.handle('get/settings', () => {
+    ipcMain.handle('get/settingsPath', () => {
         return appSettings.path;
     });
+    ipcMain.handle('get/settings', () => {
+        return appSettings.get('settings');
+    });
+
 
     ipcMain.handle('set/settings', (e, value) => {
+        const currentCrm = appSettings.get('settings.crm')
         appSettings.set('settings', value);
         BrowserWindow.getAllWindows().forEach(window => {
             window.webContents.send('settings/updated');
         });
+             
+        if(value.crm !== currentCrm){
+            // if crm changed then re rendring content for respective crm 
+            if (!edetailWindow?.isDestroyed()) {
+                if (edetailWindow)
+                    edetailWindow.close();
+            }
+
+            if(appSettings.get('settings.crm') === 'veeva'){
+                const project = veevaRecents.readData()[0];
+                selectedHTMLPath = project.path
+                if(project.hasShared){
+                    slectedSharedPath = project.sharedPath
+                }
+                console.log('veeva project:', project);
+
+            } else if(appSettings.get('settings.crm') === 'oce'){
+                const project = oceRecents.readData()[0];
+                selectedHTMLPath = project.path;
+                console.log('oce project:', project);
+            }
+            htmlDirectory.getProjectFiles(selectedHTMLPath).then((result) => {
+                htmlDirectory.getFilesInSequnecs(result, slectedSharedPath);
+                emitter.emit('filesLoaded');
+            }).catch((err) => console.log(err));
+        }
     });
 
 
     // recent folders added
     const veevaRecents = new Recent({ fileName: 'veevaRecent' });
     const oceRecents = new Recent({ fileName: 'oceRecent' });
-
 
     // loading and storing files in HTML folder
     mainWindow.webContents.on('did-finish-load', () => {
@@ -159,7 +189,7 @@ function createWindow() {
                     oceRecents.addProject(recentData);
                 }
 
-                htmlDirectory.getProjectFiles(selectedHTMLPath).then((result) => {
+                htmlDirectory.getProjectFiles(selectedHTMLPath, slectedSharedPath).then((result) => {
                     htmlDirectory.getFilesInSequnecs(result);
                     emitter.emit('filesLoaded');
                 }).catch((err) => console.log(err));
@@ -169,15 +199,47 @@ function createWindow() {
             }
 
         })
+
+        
+        ipcMain.on('open/recent-project', async (e, projectId)=>{
+            if (!edetailWindow?.isDestroyed()) {
+                if (edetailWindow)
+                    edetailWindow.close();
+            }
+
+            if(appSettings.get('settings.crm') === 'veeva'){
+                const project = veevaRecents.getProject(projectId);
+                veevaRecents.addProject(project);
+                selectedHTMLPath = project.path
+                if(project.hasShared){
+                    slectedSharedPath = project.sharedPath
+                }
+                console.log('veeva project:', project);
+
+            } else if(appSettings.get('settings.crm') === 'oce'){
+                const project = oceRecents.getProject(projectId);
+                oceRecents.addProject(project);
+                selectedHTMLPath = project.path;
+                console.log('oce project:', project);
+            }
+            htmlDirectory.getProjectFiles(selectedHTMLPath).then((result) => {
+                htmlDirectory.getFilesInSequnecs(result, slectedSharedPath);
+                emitter.emit('filesLoaded');
+            }).catch((err) => console.log(err));
+        })
     })
 
     // parsing and sending data to renderer and open edetail window function
     async function openEdetailWindow() {
+        // if (!edetailWindow?.isDestroyed()) {
+        //     if (edetailWindow)
+        //         edetailWindow.close();
+        // }
         try {
             edetailerData = fs.readFileSync(path.join(userDataPath, 'oce-data', 'edetailerData.json'));
             edetailerData = JSON.parse(edetailerData);
             if (appSettings.get('settings.crm') === 'veeva' && !(appSettings.get('settings.buildWith') === 'dspTool')) {
-                await placeShared.putShared(mainWindow, edetailerData, slectedSharedPath);
+                await placeShared.putShared(mainWindow, edetailerData, edetailerData.sharedPath);
             }
             if (mainWindow.webContents.isLoading()) {
                 mainWindow.webContents.on('dom-ready', () => {
@@ -303,7 +365,10 @@ function createWindow() {
 
     })
 
-    mainWindow.webContents.openDevTools({ mode: 'detach' })
+    // open devTools in devM
+    if(isDev){
+        mainWindow.webContents.openDevTools({ mode: 'detach' })
+    }
 
     // Manage new window state
     state.manage(mainWindow)

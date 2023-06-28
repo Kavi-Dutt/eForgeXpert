@@ -23,21 +23,33 @@ class Recent {
         return data.map(project => project.projectId);
     }
 
+    getProject(projectId){
+        const data = this.readData();
+       return data.find(project => project.projectId === projectId);
+    }
+
     writData(data) {
         const jsonData = JSON.stringify(data, null, 2);
         fs.writeFileSync(this.path, jsonData, 'utf-8')
     }
 
-    addProject(projectData) {
-        const projects = this.readData();
-        projects.unshift(projectData);
+addProject(projectData) {
+    const projects = this.readData();
 
-        if (projects.lenght > 50) {
-            projects.pop();
-        }
+    const existingIndex = projects.findIndex(p => p['projectId'] === projectData['projectId']);
 
-        this.writData(projects);
+    if (existingIndex !== -1) {
+      projects.splice(existingIndex, 1);
     }
+
+    projects.unshift(projectData); 
+
+    if (projects.length > 50) {
+      projects.pop(); 
+    }
+
+    this.writData(projects);
+  }
 
 }
 

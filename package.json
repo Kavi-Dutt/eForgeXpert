@@ -1,6 +1,6 @@
 {
   "name": "edetail-editor",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "edetail editor",
   "main": "src/main.js",
   "scripts": {
