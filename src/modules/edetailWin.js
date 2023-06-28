@@ -10,9 +10,14 @@ const { opendir, readdir } = require('fs/promises');
 const handleSequnce = require('./OCE_fileToShow');
 let edetailWindow;
 let edetailWindowMenu = Menu.buildFromTemplate(require('./edetailWindowMenu'))
+function getData(){
+  const dataPath = path.join(app.getPath('userData'),'oce-data','edetailerData.json');
+  const edetailerData = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+  return edetailerData;
+}
 
 function creatEdetailWindow(dataForWindow) {
-
+let isDataLoaded= false;
   let edetailerData = dataForWindow;
 
   let state = windowStateKeeper({
@@ -33,17 +38,21 @@ function creatEdetailWindow(dataForWindow) {
   })
 
   getHtmlFile = (sequanceName) => {
-    return edetailerData.filesInSequence[sequanceName].filter((html) => html.match(/.*\.(html?)/ig))[0]
+    return edetailerData.filesInSequence[sequanceName]?.filter((html) => html.match(/.*\.(html?)/ig))[0];
   }
 
   // edetailURLPath = path.join(edetailerData.htmlPath, edetailerData.sequences[0], getHtmlFile(edetailerData.sequences[0]) );
 
 
+// edetailWindow.once('ready-to-show', function (){
+//   console.log('ready to show');
+//   edetailerData = getData();
+// }); 
 
   edetailWindow.on('close', () => {
     // removeing folders from devtols worksapce
-    if (!edetailWindow?.isDevToolsOpened()) edetailWindow.openDevTools()
-    edetailWindow.webContents.removeWorkSpace(edetailerData.htmlPath)
+    if (!edetailWindow?.isDevToolsOpened()) edetailWindow.openDevTools();
+    edetailWindow.webContents.removeWorkSpace(edetailerData.htmlPath);
   });
 
   function removeWorkSpace(){
@@ -59,10 +68,12 @@ function creatEdetailWindow(dataForWindow) {
 
 
   // chageing title of window on page change
-  function changeTitle(title) {
-    edetailWindow.webContents.on('did-finish-load', () => {
-      edetailWindow.setTitle(title)
-    })
+  const changeTitle = (title) =>{
+    const setTitle = ()=> {
+      edetailWindow.setTitle(title);
+      edetailWindow.webContents.removeListener('did-finish-load', setTitle);
+    }
+    edetailWindow.webContents.on('did-finish-load', setTitle);
   }
 
   function edetailURLPath(currentSequanceIndex) {
@@ -97,8 +108,13 @@ function creatEdetailWindow(dataForWindow) {
   // brings edetail window in focus when clicked on fullscreen btn in rederer
   ipcMain.on('focus-on-edetailWindow', (e, args) => {
     if (edetailWindow) {
-      changeTitle(args)
-      counterIndex = edetailerData.sequences.indexOf(args)
+      changeTitle(args);
+      counterIndex = edetailerData.sequences.indexOf(args);
+      if(counterIndex<0){
+        // temprory fix for event subscription or memoization issue, should be remove after permanet fix
+        edetailerData = getData();
+        counterIndex = edetailerData.sequences.indexOf(args);
+      }
       edetailWindow.loadURL(`file:///${edetailURLPath(counterIndex)}`);
       edetailWindow.focus()
       return counterIndex
@@ -146,7 +162,7 @@ function creatEdetailWindow(dataForWindow) {
       return counterIndex
     }
     else {
-      e.sender.send('gotoSlideReply', 'not a valid link')
+      e.sender.send('gotoSlideReply', 'slide not persent in sequance or a invalid')
       // console.log.log('not valid sequence name'.red)
     }
 
@@ -160,11 +176,19 @@ function creatEdetailWindow(dataForWindow) {
 
   // going to next slide on right key perssed
   ipcMain.on('edetailWin/ArrowRight', (e) => {
+    if(!isDataLoaded){
+      edetailerData = getData();
+      isDataLoaded = true;
+    }
     goNextSequence();
   })
 
   // going to prev slide on left key perssed
   ipcMain.on('edetailWin/ArrowLeft', (e) => {
+    if(!isDataLoaded){
+      edetailerData = getData();
+      isDataLoaded = true;
+    }
     goPreviousSequence();
   })
 
@@ -172,7 +196,7 @@ function creatEdetailWindow(dataForWindow) {
   // adding and removeing file from workspace
   let enableDevToolEdit = edetailWindowMenu.getMenuItemById('enableDevToolEdit');
 
-  let disableDevToolEdit = edetailWindowMenu.getMenuItemById('disableDevToolEdit')
+  let disableDevToolEdit = edetailWindowMenu.getMenuItemById('disableDevToolEdit');
 
   enableDevToolEdit.click = function() {
     addWorkSpace()

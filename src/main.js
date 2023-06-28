@@ -214,13 +214,11 @@ function createWindow() {
                 if(project.hasShared){
                     slectedSharedPath = project.sharedPath
                 }
-                console.log('veeva project:', project);
 
             } else if(appSettings.get('settings.crm') === 'oce'){
                 const project = oceRecents.getProject(projectId);
                 oceRecents.addProject(project);
                 selectedHTMLPath = project.path;
-                console.log('oce project:', project);
             }
             htmlDirectory.getProjectFiles(selectedHTMLPath).then((result) => {
                 htmlDirectory.getFilesInSequnecs(result, slectedSharedPath);
