@@ -26,6 +26,8 @@
   "dependencies": {
     "archiver": "^5.3.1",
     "electron-is-dev": "^2.0.0",
-    "electron-window-state": "^5.0.3"
+    "electron-window-state": "^5.0.3",
+    "pdf-poppler": "^0.2.1",
+    "pixelmatch": "^5.3.0"
   }
 }

@@ -3,14 +3,16 @@ const path = require('path')
 const fs = require('fs');
 const EventEmitter = require('events');
 
-const createImg = require('./modules/createImg');
+const createImg = require('../utils/image-utils/createImg');
+const { pdf } = require('./modules/view-pdf.js');
+const proofing = require ('./modules/proofing/proofing')
 
 const emitter = new EventEmitter();
 
-const webview = document.querySelector('webview'),
-      sequancesDataViewer = document.querySelector('.sequances-data-viewer');
-      searchSequance =document.querySelector('.search-sequance')
-
+const webview = document.querySelector('#seqance-view');
+const sequancesDataViewer = document.querySelector('.sequances-data-viewer');
+const searchSequance =document.querySelector('.search-sequance');
+const totalSlidesText = document.querySelector('.slides-number');
 let edetailerData = {},
     sequanceImg_table, 
     thumbImgId, 
@@ -78,8 +80,10 @@ getHtmlFile = (sequanceName) => {
 }
 
 function changeWebviewSrc(sequanceName) {
-    currentSequanceInWebview = sequanceName
-    webview.src = `file:///${edetailURLPath(sequanceName)}`;
+    currentSequanceInWebview = sequanceName;
+    const sequancePath = edetailURLPath(sequanceName);
+    webview.dataset.sequancePath= sequancePath;
+    webview.src = `file:///${sequancePath}`;
 }
 
 function createElement(el, elClass){
@@ -157,7 +161,7 @@ function createDataTable(edetailerData) {
                 thumbImgId = this.dataset.sequanceId;
                 console.log(thumbImgId);
                 changeWebviewSrc(thumbImgId);
-                ipcRenderer.send('request-for-screenshot', edetailURLPath(thumbImgId))
+                ipcRenderer.send('request-for-screenshot', {url:edetailURLPath(thumbImgId), width:1024, height:768});
                 // reciveing response of request-for-screenshot
                 ipcRenderer.on('response-for-screenshot',(e,args)=>{
 
@@ -229,6 +233,8 @@ function createDataTable(edetailerData) {
                 if(!this.classList.contains('active')){
                     changeWebviewSrc(sequanceName);
 
+                    // console.log(pdf.src);
+
                      // sending message to main of a click on sequance( here for images)
                     ipcRenderer.send('request-for-sequenceData', sequanceName)
 
@@ -258,6 +264,11 @@ function createDataTable(edetailerData) {
             
         }
     })
+
+    ipcRenderer.on('script-pdf-selected',(e, path)=>{
+        pdf.src= path;
+        pdf.createPDFViewer(1);
+     })
 
 // creating event on creation of table
 const sequanceTableCreatedEvent = new Event('sequanceTableCreated');
@@ -304,7 +315,8 @@ fullscreenBtn.addEventListener('click',function(){
 ipcRenderer.on('data-from-main', (e, args) => {
     edetailerData = args
     createDataTable(edetailerData);
-    changeWebviewSrc(edetailerData.sequences[0])
+    changeWebviewSrc(edetailerData.sequences[0]);
+    totalSlidesText.innerText= edetailerData.sequences.length
 })
 
 document.addEventListener('sequanceTableCreated',function(){
@@ -327,11 +339,8 @@ document.addEventListener('sequanceTableCreated',function(){
             let sequanceId = el.dataset.sequanceId;
            let hasMatch = sequanceId.toLowerCase().includes(searchValue);
            el.parentElement.style.display = hasMatch? "block": "none";
-        //    console.log(hasMatch);
         })
-        // console.log(searchValue);
     })
-    console.log('custom event trigered')
 
     // compressing all
     // sending request for ziping all files
@@ -381,99 +390,101 @@ document.addEventListener('sequanceTableCreated',function(){
 })
 
 
-const oceConverterPopup = document.querySelector('#oce-converter-popup');
-const conversionLogs = document.querySelector('#conversion-logs');
 
-function addConversionLogs(content,msg){
-    let para = createElement('p','conversion-log-txt');
-    para.innerText= content;
-    if(msg.messageType=='info'){
-        para.classList.add('info');
-    }
-    else if(msg.messageType=='success'){
-        para.classList.add('success');
-    }
-    else if(msg.messageType=='addedShared'){
-        para.classList.add('added-shared');
-    }
-    else if(msg.messageType=='error'){
-        para.classList.add('error');
-    }
-    else if(msg.messageType=='conversion-succed'){
-        para.classList.add('conversion-succed');
-    }
-    else if(msg.messageType=='conversion-failed'){
-        para.classList.add('conversion-failed');
-    }
 
-    conversionLogs.appendChild(para);
-}
+// const oceConverterPopup = document.querySelector('#oce-converter-popup');
+// const conversionLogs = document.querySelector('#conversion-logs');
+
+// function addConversionLogs(content,msg){
+//     let para = createElement('p','conversion-log-txt');
+//     para.innerText= content;
+//     if(msg.messageType=='info'){
+//         para.classList.add('info');
+//     }
+//     else if(msg.messageType=='success'){
+//         para.classList.add('success');
+//     }
+//     else if(msg.messageType=='addedShared'){
+//         para.classList.add('added-shared');
+//     }
+//     else if(msg.messageType=='error'){
+//         para.classList.add('error');
+//     }
+//     else if(msg.messageType=='conversion-succed'){
+//         para.classList.add('conversion-succed');
+//     }
+//     else if(msg.messageType=='conversion-failed'){
+//         para.classList.add('conversion-failed');
+//     }
+
+//     conversionLogs.appendChild(para);
+// }
 
 // adding action on Oce converter btn
-document.querySelector('#OCE-converter_btn').addEventListener('click',function(){
-    console.log('clicked oce converter')
-    ipcRenderer.invoke('oce-conversion/request').then(result=>{
-        console.log(result)
-    }).catch(err=>{
-        console.error(err)
-    })
-})
+// document.querySelector('#OCE-converter_btn').addEventListener('click',function(){
+//     console.log('clicked oce converter')
+//     ipcRenderer.invoke('oce-conversion/request').then(result=>{
+//         console.log(result)
+//     }).catch(err=>{
+//         console.error(err)
+//     })
+// })
 
-ipcRenderer.on('oce-converter/files-slected', function(){
-    oceConverterPopup.style.display='block';
-})
+// ipcRenderer.on('oce-converter/files-slected', function(){
+//     oceConverterPopup.style.display='block';
+// })
 
-ipcRenderer.on('oce-converter/current-folder',function(e,msg){
-    let content = msg.folderName;
-    addConversionLogs(content,msg)
-})
-
-
-ipcRenderer.on('oce-converter/replaced-content-file',function(e,msg){
-    let content = 'successfully replaced content for file ' + msg.fileName;
-    addConversionLogs(content,msg)
-})
+// ipcRenderer.on('oce-converter/current-folder',function(e,msg){
+//     let content = msg.folderName;
+//     addConversionLogs(content,msg)
+// })
 
 
-ipcRenderer.on('oce-converter/added-oce-script',function(e,msg){
-    let content = 'successfully added oce script in ' + msg.folderName;
-    addConversionLogs(content,msg)
-})
+// ipcRenderer.on('oce-converter/replaced-content-file',function(e,msg){
+//     let content = 'successfully replaced content for file ' + msg.fileName;
+//     addConversionLogs(content,msg)
+// })
 
-ipcRenderer.on('oce-converter/renamed-html-file',function(e,msg){
-    let content = 'successfully renamed html file in ' + msg.folderName;
-    addConversionLogs(content,msg)
-})
 
-ipcRenderer.on('oce-conversion/replaced-thumbnail',function(e,msg){
-    let content = 'successfully replaced thumb image in ' + msg.folderName;
-    addConversionLogs(content,msg)
-})
+// ipcRenderer.on('oce-converter/added-oce-script',function(e,msg){
+//     let content = 'successfully added oce script in ' + msg.folderName;
+//     addConversionLogs(content,msg)
+// })
 
-ipcRenderer.on('oce-conversion/added-shared',function(e,msg){
-    let content = 'successfully added shared in ' + msg.folderName;
-    addConversionLogs(content,msg)
-})
+// ipcRenderer.on('oce-converter/renamed-html-file',function(e,msg){
+//     let content = 'successfully renamed html file in ' + msg.folderName;
+//     addConversionLogs(content,msg)
+// })
 
-ipcRenderer.on('oce-converter/conversion-succed',function(e,msg){
-    let content = 'successfully converted all files ';
-    addConversionLogs(content,msg);
-        oceConverterPopup.addEventListener('click',function(e){
-            if(e.target === e.currentTarget){
-                this.style.display= 'none';
-                conversionLogs.innerHTML= '';
-            }
-        })
-})
-ipcRenderer.on('oce-converter/conversion-failed',function(e,msg){
-    let content = 'failed to convert files';
-    addConversionLogs(content,msg)
-})
+// ipcRenderer.on('oce-conversion/replaced-thumbnail',function(e,msg){
+//     let content = 'successfully replaced thumb image in ' + msg.folderName;
+//     addConversionLogs(content,msg)
+// })
 
-ipcRenderer.on('oce-converter/error',function(e,msg){
-    let content = 'Error ---->' + msg.fileName +'\n' + msg.error ;
-    addConversionLogs(content,msg)
-})
+// ipcRenderer.on('oce-conversion/added-shared',function(e,msg){
+//     let content = 'successfully added shared in ' + msg.folderName;
+//     addConversionLogs(content,msg)
+// })
+
+// ipcRenderer.on('oce-converter/conversion-succed',function(e,msg){
+//     let content = 'successfully converted all files ';
+//     addConversionLogs(content,msg);
+//         oceConverterPopup.addEventListener('click',function(e){
+//             if(e.target === e.currentTarget){
+//                 this.style.display= 'none';
+//                 conversionLogs.innerHTML= '';
+//             }
+//         })
+// })
+// ipcRenderer.on('oce-converter/conversion-failed',function(e,msg){
+//     let content = 'failed to convert files';
+//     addConversionLogs(content,msg)
+// })
+
+// ipcRenderer.on('oce-converter/error',function(e,msg){
+//     let content = 'Error ---->' + msg.fileName +'\n' + msg.error ;
+//     addConversionLogs(content,msg)
+// })
 
 
 

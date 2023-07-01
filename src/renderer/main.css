@@ -156,7 +156,7 @@ nav {
     z-index: 99;
 }
 
-nav div{
+nav>div{
     display: flex;
 
 }
@@ -178,12 +178,49 @@ nav button:focus-visible{
     outline: none;
     background-color: #4956b2;
 }
-
+nav .left-nav {
+    width: 80%;
+}
 nav .left-nav button{
     margin:0 5px;
     padding: 5px;
 }
+.project-info-container {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 4%;
+    /* justify-content: space-between; */
+    height: 100%;
+}
 
+.project-info-container p{
+    color: #fff;
+    /* display: inline-block; */
+    -webkit-app-region: no-drag;
+    font-family: 'segoe UI', Arial, Helvetica,sans-serif;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+nav p input.project-location {
+    border: none;
+    /* background: none; */
+    width: 300px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    outline: none;
+    font-family: inherit;
+    font-size: inherit;
+    padding: 0 2%;
+    color: #542EBE;
+    border-radius: 2px;
+}
+.project-info-container p span{
+    font-weight: bold;
+}
 nav .right-nav{
     padding-bottom: 4px;
 }
@@ -264,12 +301,17 @@ div.container {
     position: relative;
 }
 
-
-
-.wrap-1 div.all-sequances{
+.left-side {
     width: 53%;
+}
+
+.right-side {
+    width: 45%;
+}
+
+.wrap-1 div.all-sequances {
+    width: 100%;
     box-shadow: 0 1px 8px 1px #b3b3b3;
-    
 }
 
 #all-sequances_nav,#webview_nav{
@@ -316,7 +358,7 @@ div.all-sequances .sequances-data-viewer {
     padding: 0 2% 10px 2%;
     overflow: hidden;
     overflow-y: scroll;
-    height: 600px;
+    height: 87vh;
     margin-top: 20px;
 }
 /* div.all-sequances .sequances-data-viewer::-webkit-scrollbar-thumb {
@@ -351,7 +393,7 @@ div.all-sequances .sequances-data-viewer {
     flex-direction: column;
     justify-content: center;
     /* align-items: center; */
-    margin-left: 8%;
+    margin-left: 5%;
     flex-grow: 1;
 }
 .sequance-name_container p{
@@ -371,10 +413,10 @@ div.all-sequances .sequances-data-viewer {
 } */
 
 .wrap-1 div.webview_container {
-    width: 45%;
+    width: 100%;
     margin-left: 2%;
     box-shadow: 0 1px 8px 1px #b3b3b3;
-    height: 400px;
+    height: 57vh;
 }
 
 #webview_nav span {
@@ -385,6 +427,15 @@ div#webview_left-nav {
     flex-grow: 1;
     display: flex;
     flex-wrap: nowrap;
+    align-items: center;
+}
+
+input#proofing-input {
+    width: 70px;
+    border-radius: 4px;
+    border: 1px solid #C5C5C5;
+    padding: 2px 6px;
+    margin: 0 12px;
 }
 
 div#webview_left-nav button{
@@ -399,10 +450,11 @@ div#webview_left-nav button{
 }
 
 #webview_holder {
-    margin-top: 20px;
-    height: 100%;
+    margin-top: 6px;
+    height: calc(100% - 56px);
     /* box-shadow: 0 1px 8px 1px #b3b3b3; */
-    padding-bottom: 20px;
+    /* padding-bottom: 20px; */
+    width: 100%;
 }
 
  /* button.accordion {
@@ -462,11 +514,20 @@ div#webview_left-nav button{
         min-width: 100%;
     }
 }
+@media only screen and (max-width: 900px){
+    
+    nav p input.project-location {
+        width: 200px;
+    }
+}
 @media only screen and (max-width: 800px){
    
       #all-sequances_right-nav {
         flex-grow: 0;
         
+    }
+    nav p input.project-location {
+        width: 200px;
     }
 }
 @media only screen and (max-width: 650px){
@@ -663,6 +724,10 @@ button.add-project {
 .crm-specfic-setting{
     display: none;
 }
+
+button#add-pdf_btn {
+    width: 80%;
+}
 /* add project css ends */
 
 /* recent project list css */
@@ -704,3 +769,53 @@ button.add-project {
     color: #707070;
     font-size: 14px;
 }
+
+/*pdf container css */
+.pdf-container {
+    margin-left: 2%;
+    margin-top: 1%;
+    width: 100%;
+}
+.pdf-display {
+    width: 100%;
+    height: 36vh;
+}
+.pdf-display embed{
+    width: 100%;   
+    height: 100%;
+}
+/* range start */
+.range-wrap {
+    position: relative;
+    width: 75%;
+    padding-top: 20px;
+  }
+  .range-text{
+    padding-bottom: 10px;
+    font-weight: bold;
+    font-size: 0.875rem;
+    color: #000;
+  }
+  .range {
+    width: 100%;
+  }
+  .bubble {
+    background-color: #5664D2;
+    color: white;
+    padding: 2px 7px;
+    position: absolute;
+    border-radius: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+  .bubble::after {
+    content: "";
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background-color: #5664D2;
+    top: -1px;
+    left: 50%;
+  }
+ 
+/* range ends */

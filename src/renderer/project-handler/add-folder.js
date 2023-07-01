@@ -1,5 +1,5 @@
 const { ipcRenderer } = require('electron');
-const{getAppSettings} = require('../utils/getSettings');
+const { getAppSettings } = require('../utils/getSettings');
 let appSettings;
 (async () => {
     appSettings = await getAppSettings();
@@ -19,14 +19,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const projectIdInput = document.querySelector('#projectID-input');
     const hasSharedCheckbox = document.querySelector('#has-shared-checkbox');
     const addProjectButton = document.querySelector('#add-project_btn');
+    const addPdfButton = document.querySelector('#add-pdf_btn');
 
     let projectId = projectIdInput.value;
     let hasShared = hasSharedCheckbox?.checked;
 
     projectIdInput.addEventListener('input', checkInputs);
-    // hasSharedCheckbox?.addEventListener('change', checkInputs);
 
-    // sending ipc message on click of add project btn (currently in navigation bar)
+    // send message to main process for adding project folder
     addProjectButton.addEventListener('click', function () {
         if (appSettings.crm === 'veeva') {
             const projectId = projectIdInput.value;
@@ -39,6 +39,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     });
 
+    // send message to main process for adding a pdf script
+    addPdfButton.addEventListener('click',function(){
+        ipcRenderer.send(('add/script-pdf'));
+    })
 
     function checkInputs() {
         if (projectIdInput.value !== '') {
@@ -50,6 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 })
 
+// sents message to main process for adding project folder 
 function openDilog(options) {
     ipcRenderer.send('open-dialog-trigerd', options)
     ipcRenderer.invoke('open-dialog').then((result) => console.log(result))

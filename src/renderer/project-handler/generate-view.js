@@ -15,8 +15,10 @@ ipcRenderer.on('settings/updated', async (e) => {
     appSettings = await getAppSettings();
     if(appSettings.crm==='veeva'){
         generateView({projectsIds: projects.veeva.allIds});
+        updateTopBar(projects.veeva.data[0]);
     } else if(appSettings.crm ==='oce'){
         generateView({projectsIds: projects.oce.allIds});
+        updateTopBar(projects.oce.data[0]);
     }
 });
 
@@ -35,8 +37,10 @@ ipcRenderer.on('settings/updated', async (e) => {
 
     if(appSettings.crm==='veeva'){
         generateView({projectsIds: projects.veeva.allIds});
+        updateTopBar(projects.veeva.data[0]);
     } else if(appSettings.crm ==='oce'){
         generateView({projectsIds: projects.oce.allIds});
+        updateTopBar(projects.oce.data[0]);
     }
 
     ipcRenderer.on('settings/updated', async (e) => {
@@ -53,17 +57,32 @@ function createElement(el, elClass){
 
 function generateView(data){
     recentProjectsContainer.innerHTML='';
-    data.projectsIds.forEach(projectId => {
+    data.projectsIds.forEach((projectId, i )=> {
         const projectIdWrapper = createElement('div', 'projectId-wrapper');
         projectIdWrapper.dataset.projectId = projectId;
         projectIdWrapper.addEventListener('click', function(){
             openProject(projectId)
+            if(appSettings.crm==='veeva'){
+                updateTopBar(projects.veeva.data[i]);
+            } else if(appSettings.crm ==='oce'){
+                updateTopBar(projects.oce.data[i]);
+            }
+            ;
+        
         })
         const projectIdText = createElement('p', 'projectId-text');
         projectIdText.innerText = projectId;
         projectIdWrapper.append(projectIdText);
         recentProjectsContainer.append(projectIdWrapper);
     });
+}
+
+//  update top menu
+function updateTopBar(project){
+    const projectIdText = document.querySelector('.project-id');
+    const projectLocationText = document.querySelector('.project-location');
+    projectIdText.innerText= project.projectId;
+    projectLocationText.value = project.path;
 }
 
 function openProject(projectId){

@@ -10,6 +10,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const selectBuildWith = document.querySelector('#select_build-with');
   const crmSpecficsetting = document.querySelector('.crm-specfic-setting');
 
+  const allRanges = document.querySelectorAll(".range-wrap");
+  const proofingLevelInput = document.querySelector('#proffing-level-input')
+
   // Thumbnail Settings
   const thumbnailFormatJpg = document.querySelector('#thumbnail-format-jpg');
   const thumbnailFormatPng = document.querySelector('#thumbnail-format-png');
@@ -34,6 +37,29 @@ document.addEventListener('DOMContentLoaded', async () => {
   } else {
     crmSpecficsetting.classList.remove('d-block');
   }
+
+  // range slider for proffing level
+  proofingLevelInput.value = settings.proofingLevel || settings.proofingLevel === 0  ? (10 - (settings.proofingLevel * 10)) : 3;
+  allRanges.forEach(wrap => {
+  const range = wrap.querySelector(".range");
+  const bubble = wrap.querySelector(".bubble");
+
+  range.addEventListener("input", () => {
+    
+    console.log((10-range.value)/10)
+    setBubble(range, bubble);
+  });
+  setBubble(range, bubble);
+});
+
+function setBubble(range, bubble) {
+  const val = range.value;
+  const min = range.min ? range.min : 0;
+  const max = range.max ? range.max : 9;
+  const newVal = Number(((val - min) * 100) / (max - min));
+  bubble.innerHTML = val;
+  bubble.style.left = `calc(${newVal}% + (${8 - newVal * 0.15}px))`;
+}
 
   // Thumbnail Settings
   if (settings.thumbnailFormat === 'jpg') {
@@ -60,6 +86,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       _settings.buildWith = selectBuildWith.value;
+
+      _settings.proofingLevel = (10 - proofingLevelInput.value)/10;
 
       if (thumbnailFormatJpg.checked) {
         _settings.thumbnailFormat = 'jpg';

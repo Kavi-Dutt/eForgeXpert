@@ -8,6 +8,17 @@ class Recent {
         this.path = path.join(this.userDataPath, options.fileName + '.json');
     }
 
+    static get(fileName) {
+        const userDataPath = app.getPath('userData');
+        const filePath = path.join(userDataPath, fileName + '.json');
+        try {
+            const data = fs.readFileSync(filePath, 'utf-8');
+            return JSON.parse(data);
+        } catch (error) {
+            return [];
+        }
+    }
+
     readData() {
         try {
             const data = fs.readFileSync(this.path, 'utf-8');
@@ -23,9 +34,9 @@ class Recent {
         return data.map(project => project.projectId);
     }
 
-    getProject(projectId){
+    getProject(projectId) {
         const data = this.readData();
-       return data.find(project => project.projectId === projectId);
+        return data.find(project => project.projectId === projectId);
     }
 
     writData(data) {
@@ -33,23 +44,23 @@ class Recent {
         fs.writeFileSync(this.path, jsonData, 'utf-8')
     }
 
-addProject(projectData) {
-    const projects = this.readData();
+    addProject(projectData) {
+        const projects = this.readData();
 
-    const existingIndex = projects.findIndex(p => p['projectId'] === projectData['projectId']);
+        const existingIndex = projects.findIndex(p => p['projectId'] === projectData['projectId']);
 
-    if (existingIndex !== -1) {
-      projects.splice(existingIndex, 1);
+        if (existingIndex !== -1) {
+            projects.splice(existingIndex, 1);
+        }
+
+        projects.unshift(projectData);
+
+        if (projects.length > 50) {
+            projects.pop();
+        }
+
+        this.writData(projects);
     }
-
-    projects.unshift(projectData); 
-
-    if (projects.length > 50) {
-      projects.pop(); 
-    }
-
-    this.writData(projects);
-  }
 
 }
 

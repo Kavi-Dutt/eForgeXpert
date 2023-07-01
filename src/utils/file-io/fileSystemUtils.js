@@ -30,6 +30,28 @@ function createDirectory(dirPath, folderName) {
       });
     });
   }
+
+  function deleteFilesFromDirectory(directoryPath) {
+    fs.readdir(directoryPath, (err, files) => {
+      if (err) {
+        console.error('Error reading directory:', err);
+        return;
+      }
+  
+      files.forEach(file => {
+        const filePath = path.join(directoryPath, file);
+        fs.unlink(filePath, err => {
+          if (err) {
+            console.error('Error deleting file:', err);
+            return;
+          }
+          console.log('Deleted file:', filePath);
+        });
+      });
+    });
+  }
+
 module.exports = {
     createDirectory,
+    deleteFilesFromDirectory,
 }

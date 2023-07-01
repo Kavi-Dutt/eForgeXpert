@@ -12,13 +12,12 @@
 <body>
     <nav>
         <div class="left-nav">
-            <button id="open-side-pannel"><span>&#9776;</span></button>
-            <button><span>File</span></button>
-            <!-- <button id="add-project_btn"><span>Add</span></button> -->
-            <button><span>View</span></button>
-            <button><span>Help</span></button>
-            <button id="OCE-converter_btn"><span>OCE Converter</span></button>
-
+            <div class="project-info-container">
+                <p class="project-id-container">project Id: <span class="project-id">VVF-1208</span></p>
+                <p class="project-location-container">Location: <input type="text"  class="project-location" value="File:///D:/others/App_Dev/edetail-editor_OCE/test-eda-OCE/HTML/07_RO_SMPCAndPrescribingInformation_SMPC1/"></p>
+                <p class="slide-number-container">Total Slides: <span class="slides-number">49</span></p>
+            </div>
+            <!-- <button id="OCE-converter_btn"><span>OCE Converter</span></button> -->
         </div>
         <div class="right-nav">
             <button id="minimize" title="Minimize"><span>&minus;</span></button>
@@ -69,7 +68,12 @@
                             </form>
                         </div>
                     </div>
+                    <!-- this button is for  adding a project files-->
                     <button id="add-project_btn" type="button" class="btn-type-3 add-project disable">Add Project</button>
+
+                    <!-- this button is for adding a pdf script -->
+                    <button id="add-pdf_btn" class="btn-type-3">Add PDF Script</button>
+
                     <div class="recent-projects">
                         <div class="recent-header-container">
                             <p class="recent-header">Recent</p>
@@ -158,6 +162,11 @@
                                     <option value="dspTool">DSP Tool</option>
                                 </select>
                             </div>
+                            <div class="range-general-setting range-wrap">
+                                <p class="range-text">Proofing Level</p>
+                                <input id="proffing-level-input" type="range" class="range" name="foo"  min="0" max="10" step="1">
+                                <output class="bubble"></output>  
+                            </div>
 
                             <button id="save-general-setting" class="save-setting btn-type-3">Save</button>
                     </form>
@@ -170,7 +179,8 @@
                 <div class="container">
 
                     <div class="d-flex">
-                        <div class="all-sequances">
+                        <div class="left-side d-flex">
+                            <div class="all-sequances">
                             <div id="all-sequances_nav">
                                 <div id="all-sequances_left-nav">
                                     <button data-tooltip="rename all slides" class="rename-sequances btn-type-2 ">
@@ -215,23 +225,33 @@
                                 </div> -->
 
                             </div>
-                        </div>
-                        <div class="webview_container">
-                            <!-- html preview -->
-                            <div id="webview_nav">
-                                <div id="webview_left-nav">
-                                    <span>HTML Preview</span>
+                            </div>
+                    </div>
+                        <div class="right-side">
+                            <div class="webview_container">
+                                <!-- html preview -->
+                                <div id="webview_nav">
+                                    <div id="webview_left-nav">
+                                        <span>HTML Preview</span>
+                                        <input placeholder="pdf pg" id="proofing-input" type="number">
+                                        <button id="proffing-btn" class="btn-type-2">Proffing</button>
+                                    </div>
+                                    <div id="webview_right-nav">
+                                        <button data-tooltip="view current slide in Fullscreen"
+                                            class="fullscreen-btn btn-type-2">Full Screen</button>
+                                    </div>
                                 </div>
-                                <div id="webview_right-nav">
-                                    <button data-tooltip="view current slide in Fullscreen"
-                                        class="fullscreen-btn btn-type-2">Full Screen</button>
+                                <div id="webview_holder">
+                                    <webview id="seqance-view" src=""
+                                        style="display:inline-flex; width:100%; height:100%; background:#fff"></webview>
+                                </div>
+    
+                            </div>
+                            <div class="pdf-container">
+                                <div class="pdf-display">
+                                    <embed class="pdf-view" type="application/pdf"></embed>
                                 </div>
                             </div>
-                            <div id="webview_holder">
-                                <webview id="seqance-view" src=""
-                                    style="display:inline-flex; width:100%; height:83%; background:#fff"></webview>
-                            </div>
-
                         </div>
                     </div>
                 </div>
@@ -247,7 +267,7 @@
     require('./modules/settings');
     require('./app');
     require('./project-handler/add-folder');
-    require('./project-handler/generate-view')
+    require('./project-handler/generate-view');
     require('./modules/menueRnderer.js');
 </script>
 

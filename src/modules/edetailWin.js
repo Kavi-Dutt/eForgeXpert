@@ -51,8 +51,13 @@ let isDataLoaded= false;
 
   edetailWindow.on('close', () => {
     // removeing folders from devtols worksapce
-    if (!edetailWindow?.isDevToolsOpened()) edetailWindow.openDevTools();
-    edetailWindow.webContents.removeWorkSpace(edetailerData.htmlPath);
+    if(edetailWindow){
+      if (!edetailWindow?.isDevToolsOpened()){ 
+        edetailWindow.openDevTools();
+      };
+      edetailWindow.webContents.removeWorkSpace(edetailerData.htmlPath);
+    }
+    
   });
 
   function removeWorkSpace(){
@@ -70,10 +75,14 @@ let isDataLoaded= false;
   // chageing title of window on page change
   const changeTitle = (title) =>{
     const setTitle = ()=> {
-      edetailWindow.setTitle(title);
-      edetailWindow.webContents.removeListener('did-finish-load', setTitle);
+      if(edetailWindow){
+        edetailWindow.setTitle(title);
+        edetailWindow.webContents.removeListener('did-finish-load', setTitle);
+      };
     }
-    edetailWindow.webContents.on('did-finish-load', setTitle);
+    if(edetailWindow){
+      edetailWindow.webContents.on('did-finish-load', setTitle);
+    }
   }
 
   function edetailURLPath(currentSequanceIndex) {

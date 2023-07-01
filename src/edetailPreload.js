@@ -15,7 +15,6 @@ let appSettings;
 
 function virtulaizeAPI() {
     if (appSettings.crm === 'veeva') {
-        console.log('api vertulized for veeva');
         const com = { veeva: { clm: {} } };
         com.veeva.clm.gotoSlide = function (slideName, presentation) {
             ipcRenderer.send('gotoSlide', slideName)
@@ -35,7 +34,6 @@ function virtulaizeAPI() {
         
     } 
     else if (appSettings.crm == 'oce') {
-        console.log('api vertulized for oce');
         const CLMPlayer = {
             defineNoSwipeRegion: (regionId, x, y, width, height) => {
                 return null
