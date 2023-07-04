@@ -43,10 +43,15 @@ const getPdfInfo = function (pdfPath) {
     if (!pdfPath) {
         pdfPath = getPdfPath();
     }
-    return pdfPoopler.info(pdfPath)
-        .then(pdfinfo => {
-            return pdfinfo;
-        });
+    if (pdfPath) {
+        return pdfPoopler.info(pdfPath)
+            .then(pdfinfo => {
+                return pdfinfo;
+            });
+    } else {
+        return null;
+    }
+
 }
 
 const getPdfPath = function () {
@@ -71,13 +76,17 @@ const getImage = function (options, pdfPath) {
         out_prefix: options.fileName ? options.fileName : path.baseName(file, path.extname(file)),
         page: options.page ? options.page : null,
     }
-   return pdfPoopler.convert(pdfPath, opts)
-    .then(res => {
-        return res;
-    })
-    .catch(error => {
-        console.error(error);
-    })
+    if (pdfPath) {
+        return pdfPoopler.convert(pdfPath, opts)
+            .then(res => {
+                return res;
+            })
+            .catch(error => {
+                console.error(error);
+            })
+    } else {
+        return null
+    }
 };
 
 const sendPdfPath = function (window, pdfPath) {

@@ -1,11 +1,3 @@
-const path = require('path');
-const fs = require('fs');
-const { doesNotMatch } = require('assert');
-// const {creatEdetailWindow} = require('./edetailWin')
-
-
-
-
 module.exports = [
     {
         id: 'for-spave_1',

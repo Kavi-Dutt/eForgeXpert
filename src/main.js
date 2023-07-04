@@ -1,19 +1,18 @@
-const { app, BrowserWindow, Menu, MenuItem, screen, ipcMain, dialog, nativeImage } = require('electron')
+const { app, BrowserWindow, Menu,  ipcMain, } = require('electron')
 
-const windowStateKeeper = require('electron-window-state')
 const path = require('path')
 const fs = require('fs');
 const EventEmitter = require('events');
 const { exec } = require('child_process');
-const { opendir, readdir, writeFile } = require('fs/promises');
 
+let edetailWindowMenuTemplate = require('./modules/edetailWindowMenu');
 
 const isDev = require('electron-is-dev');
 // const colors = require('colors')
 
-const mainMenu = require('./modules/mainMenu');
+const { MainWindow } = require('./app-window/mainWindow')
+const { EdetailWindow } = require('./app-window/edetailWin');
 const { htmlDirectory } = require('./modules/OCE_fileToShow');
-const { creatEdetailWindow } = require('./modules/edetailWin');
 const compressFile = require('./utils/zip/compressFiles');
 const sequanceDataOp = require('./modules/sequanceDataOp');
 const capturePage = require('./utils/image-utils/capturePage');
@@ -23,106 +22,274 @@ const { placeShared } = require('./utils/file-io/place-shared');
 const fileSystemUtils = require('./utils/file-io/fileSystemUtils');
 const { Recent } = require('./utils/store/recent-projects');
 const { pdfHandler } = require('./utils/file-io/handle-pdf');
-const { proofing} = require('./modules/proofing');
+const { proofing } = require('./modules/proofing');
 
-const emitter = new EventEmitter();
+const userDataPath = app.getPath('userData');
 
-let edetailer,
-    edetailerData = {},
-    edetailWindow,
-    selectedHTMLPath,
-    slectedSharedPath,
-    scriptPdfPath;
+let edetailerData;
 
-function createWindow() {
-    const display = screen.getAllDisplays()
-    const screenWidth = display[0].size.width
-    const screenHeight = display[0].size.height
-    const screenWidhtPercent = screenWidth / 100
-    const screenHeightPercent = screenHeight / 100
-    let state = windowStateKeeper({
-        defaultWidth: 800, defaultHeight: 600,
+const mainWindow = new MainWindow();
 
-    })
+let edetailWindow;
 
-    global.mainWindow = new BrowserWindow({
-        x: 0, y: 0,
-        width: state.width, height: state.height,
-        // width: 800, height: 600,
-        frame: false,
-        // titleBarStyle: 'hidden',
-        // titleBarOverlay: true,
-        // titleBarOverlay: {
-        //     color: '#ff0000',
-        //     symbolColor: '#74b1be'
-        //   },
-        webPreferences: {
-            devTools: true,
-            contextIsolation: false,
-            nodeIntegration: true,
-            webviewTag: true,
+const appSettings = new Store({
+    confingName: 'user-settings',
+    defaults: {
+        settings: {
+            crm: 'oce',
+            buildWith: 'beSpoke',
+            thumbnailName: 'thumb',
+            thumbnailFormat: 'png',
+            thumbnailWidth: 1024,
+            thumbnailHeight: 768,
         }
-    })
+    }
+});
 
-    // function for opening a folder in vs code
-    function openInVsCode(sequancePath) {
-        sequancePath = compressFile.replaceCharacters(sequancePath)
-        let openVScode = exec(`cd ${sequancePath}; code . `, { 'shell': 'powershell.exe' }, (err, stdout, stderr) => {
-            if (err) {
-                // console.log.log(`error: ${err.message}`);
-                return;
-            }
-            if (stderr) {
-                // console.log.log(`stderr: ${stderr}`);
-                return;
-            }
-            console.log(`stdout ${stdout}`)
-        });
+// recent folders added
+const veevaRecents = new Recent({ fileName: 'veevaRecent' });
+const oceRecents = new Recent({ fileName: 'oceRecent' });
+
+
+
+mainWindow.sequanceContextMenu = Menu.buildFromTemplate([
+    {
+        label: 'open in VS code',
+        id: 'vscode',
+
+    }
+]);
+
+mainWindow.openInVsCode = function (sequancePath) {
+    sequancePath = compressFile.replaceCharacters(sequancePath)
+    let openVScode = exec(`cd ${sequancePath}; code . `, { 'shell': 'powershell.exe' }, (err, stdout, stderr) => {
+        if (err) {
+            // console.log.log(`error: ${err.message}`);
+            return;
+        }
+        if (stderr) {
+            // console.log.log(`stderr: ${stderr}`);
+            return;
+        }
+        console.log(`stdout ${stdout}`)
+    });
+}
+
+mainWindow.openDialog = async function (recentData) {
+    console.log(recentData)
+    // closeing edetailWindow before adding anothers project
+    if (!edetailWindow?.window?.isDestroyed()) {
+        if (edetailWindow?.window)
+            edetailWindow?.window.close();
     }
 
-    // context menu for sequance data holder area in renderer
-    let contextMenuSequanceDataHolder = Menu.buildFromTemplate([
-        {
-            label: 'open in VS code',
-            id: 'vscode',
+    try {
+        mainWindow.selectedHTMLPath = await htmlDirectory.openDialog(mainWindow.window);
 
+        recentData.path = mainWindow.selectedHTMLPath;
+
+        if (appSettings.get('settings.crm') === 'veeva') {
+            if (!(appSettings.get('settings.buildWith') === 'dspTool') && recentData.hasShared) {
+                mainWindow.slectedSharedPath = await placeShared.openDialog(mainWindow.window)
+            }
+            recentData.sharedPath = mainWindow.slectedSharedPath;
+            veevaRecents.addProject(recentData);
+
+        } else if (appSettings.get('settings.crm') === 'oce') {
+            oceRecents.addProject(recentData);
         }
-    ])
 
-    // mainWindow.loadFile('renderer/main.html')
-    if (isDev) {
-        // Development mode: Load the file directly from the file system
-        mainWindow.loadFile('renderer/main.html');
-    } else {
-        // Production mode: Load the file from the packaged app
-        mainWindow.loadURL(`file://${path.join(__dirname, 'renderer', 'main.html')}`);
+        htmlDirectory.getProjectFiles(mainWindow.selectedHTMLPath, mainWindow.slectedSharedPath).then((result) => {
+            htmlDirectory.getFilesInSequnecs(result);
+            mainWindow.emitter.emit('filesLoaded');
+        }).catch((err) => console.log(err));
     }
+    catch (err) {
+        console.log(err);
+    }
+}
+
+mainWindow.openRecentProject = (projectId) => {
+    if (!edetailWindow?.window?.isDestroyed()) {
+        if (edetailWindow?.window)
+            edetailWindow?.window.close();
+    }
+
+    if (appSettings.get('settings.crm') === 'veeva') {
+        const project = veevaRecents.getProject(projectId);
+        veevaRecents.addProject(project);
+        mainWindow.selectedHTMLPath = project.path;
+        mainWindow.scriptPdfPath = project.scriptPdfPath;
+        if (project.hasShared) {
+            mainWindow.slectedSharedPath = project.sharedPath
+        }
+
+    } else if (appSettings.get('settings.crm') === 'oce') {
+        const project = oceRecents.getProject(projectId);
+        oceRecents.addProject(project);
+        mainWindow.selectedHTMLPath = project.path;
+        mainWindow.scriptPdfPath = project.scriptPdfPath;
+    }
+
+    htmlDirectory.getProjectFiles(mainWindow.selectedHTMLPath, mainWindow.slectedSharedPath).then((result) => {
+        htmlDirectory.getFilesInSequnecs(result);
+        mainWindow.emitter.emit('filesLoaded');
+    }).catch((err) => console.log(err));
+}
+
+mainWindow.addScriptPdf = async (e) => {
+    mainWindow.scriptPdfPath = await pdfHandler.openDialog();
+
+    e.sender.send('script-pdf-selected', mainWindow.scriptPdfPath);
+
+    if (appSettings.get('settings.crm') === 'veeva') {
+        const project = veevaRecents.readData()[0];
+        project.scriptPdfPath = mainWindow.scriptPdfPath;
+        veevaRecents.addProject(project);
+    } else if (appSettings.get('settings.crm') === 'oce') {
+        const project = oceRecents.readData()[0];
+        project.scriptPdfPath = mainWindow.scriptPdfPath;
+        oceRecents.addProject(project);
+    }
+}
+
+mainWindow.openEdetailWindow = async () => {
+    if (!edetailWindow?.window?.isDestroyed()) {
+        if (edetailWindow?.window)
+            edetailWindow?.window.close();
+    }
+    try {
+        edetailerData = fs.readFileSync(path.join(userDataPath, 'oce-data', 'edetailerData.json'));
+        edetailerData = JSON.parse(edetailerData);
+        if (appSettings.get('settings.crm') === 'veeva' && !(appSettings.get('settings.buildWith') === 'dspTool')) {
+            await placeShared.putShared(mainWindow.window, edetailerData, edetailerData.sharedPath);
+        }
+        if (mainWindow.window.webContents.isLoading()) {
+            mainWindow.window.webContents.on('dom-ready', () => {
+                mainWindow.window.webContents.send('data-from-main', edetailerData);
+                pdfHandler.sendPdfPath(mainWindow.window);
+            })
+        }
+        else {
+            mainWindow.window.webContents.send('data-from-main', edetailerData);
+            pdfHandler.sendPdfPath(mainWindow.window);
+        }
+
+
+    } catch (err) {
+        // console.log.log(err)
+    }
+
+    setEdetailWindow(edetailerData);
+    edetailWindow_initializeEvents();
+}
+mainWindow.initEvents = mainWindow_initializeEvents;
+
+mainWindow.afterFinishLoad = () => {
+    mainWindow.window.webContents.on('did-finish-load', () => {
+
+        // listens request for add project from main window
+        ipcMain.on('open-dialog-trigerd', async (e, recentData) => {
+            console.log(recentData)
+            mainWindow.openDialog(recentData);
+        })
+
+        // listens request for opening a recent project
+        ipcMain.on('open/recent-project', async (e, projectId) => {
+            mainWindow.openRecentProject(projectId);
+        })
+
+        // listens request for add a pdf script
+        ipcMain.on('add/script-pdf', async (e, args) => {
+            mainWindow.addScriptPdf(e);
+        })
+    })
+}
+
+
+app.on('ready', function () {
+    mainWindow.createWindow();
+    mainWindow.afterFinishLoad();
+    mainWindow.initEvents();
+    pdfHandler.init();
+    proofing.init();
+    fs.access(path.join(userDataPath, 'oce-data', 'edetailerData.json'), fs.constants.F_OK, (err) => {
+        if (err) {
+            console.log("doesnot exist");
+        }
+        else {
+            mainWindow.openEdetailWindow();
+        }
+    })
+})
+
+app.on('window-all-closed', () => {
+    if (process.platform != 'darwin') app.quit()
+})
+
+
+// for mac os
+app.on('activate', () => {
+    if (mainWindow.window === null) {
+        mainWindow.createWindow();
+        mainWindow.afterFinishLoad();
+    };
+})
+
+function setEdetailWindow(dataForWindow) {
+    edetailWindow = new EdetailWindow(dataForWindow);
+
+    // Build the menu from the modified template
+    const edetailWindowMenu = Menu.buildFromTemplate(edetailWindowMenuTemplate);
+
+    const edetailWin_nextBtn = edetailWindowMenu.getMenuItemById('nextSlideBtn')
+    const edetailWin_prevBtn = edetailWindowMenu.getMenuItemById('prevSlideBtn')
+    const edetailWin_enableLiveEdit = edetailWindowMenu.getMenuItemById('enableDevToolEdit');
+    const edetailWin_disableLiveEdit = edetailWindowMenu.getMenuItemById('disableDevToolEdit');
+
+    edetailWin_nextBtn.click = () => { edetailWindow.handleGoNextSequence() };
+    edetailWin_prevBtn.click = () => { edetailWindow.handleGoPreviousSequence() };
+    edetailWin_enableLiveEdit.click = function () {
+        edetailWindow.enableDevToolEdit();
+        this.visible = false;
+        edetailWin_disableLiveEdit.visible = true;
+    }
+    edetailWin_disableLiveEdit.click = function () {
+        edetailWindow.disableDevToolEdit();
+        this.visible = false;
+        edetailWin_enableLiveEdit.visible = true;
+    }
+
+    edetailWindow?.window.setMenu(edetailWindowMenu);
+}
+
+function mainWindow_initializeEvents() {
+
+    mainWindow.emitter.on('filesLoaded', (e) => {
+        mainWindow.openEdetailWindow();
+    });
+
+
+    // minimizing main window 
+    ipcMain.on('app/minimize', e => {
+        mainWindow.minimizeApp()
+    })
+    // close main Window
+    ipcMain.on('app/close', e => {
+        mainWindow.closeApp();
+    })
+    // toggleFullscreen main Window
+    ipcMain.on('app/toggleFullscreen', e => {
+        mainWindow.toggleFullscreen();
+    })
+
     ipcMain.on('sequancesDataHolder/contextmenu', (e, args) => {
-        contextMenuSequanceDataHolder.popup()
-        contextMenuSequanceDataHolder.getMenuItemById('vscode').click = () => openInVsCode(args)
+        mainWindow.sequanceContextMenu.popup();
+        mainWindow.sequanceContextMenu.getMenuItemById('vscode').click = () => mainWindow.openInVsCode(args);
     })
-
-    const userDataPath = app.getPath('userData');
 
     ipcMain.handle('get/userDataPath', () => userDataPath);
 
-    // settings for app
-    const appSettings = new Store({
-        confingName: 'user-settings',
-        defaults: {
-            settings: {
-                crm: 'oce',
-                buildWith: 'beSpoke',
-                thumbnailName: 'thumb',
-                thumbnailFormat: 'png',
-                thumbnailWidth: 1024,
-                thumbnailHeight: 768,
-            }
-        }
-    });
-
-   
-    //listening for get/setting request
     ipcMain.handle('get/settingsPath', () => {
         return appSettings.path;
     });
@@ -130,7 +297,6 @@ function createWindow() {
     ipcMain.handle('get/settings', () => {
         return appSettings.get('settings');
     });
-
 
     ipcMain.handle('set/settings', (e, value) => {
         const currentCrm = appSettings.get('settings.crm')
@@ -142,208 +308,41 @@ function createWindow() {
 
         // if crm changed then re-rendring content for respective crm 
         if (value.crm !== currentCrm) {
-            if (!edetailWindow?.isDestroyed()) {
-                if (edetailWindow)
-                    edetailWindow.close();
+            if (!edetailWindow?.window?.isDestroyed()) {
+                if (edetailWindow?.window)
+                    edetailWindow?.window.close();
             }
 
             if (appSettings.get('settings.crm') === 'veeva') {
                 const project = veevaRecents.readData()[0];
-                selectedHTMLPath = project.path;
-                scriptPdfPath = project.scriptPdfPath;
+                mainWindow.selectedHTMLPath = project.path;
+                mainWindow.scriptPdfPath = project.scriptPdfPath;
                 if (project.hasShared) {
-                    slectedSharedPath = project.sharedPath
+                    mainWindow.slectedSharedPath = project.sharedPath;
                 }
 
             } else if (appSettings.get('settings.crm') === 'oce') {
                 const project = oceRecents.readData()[0];
-                selectedHTMLPath = project.path;
-                scriptPdfPath = project.scriptPdfPath;
+                mainWindow.selectedHTMLPath = project.path;
+                mainWindow.scriptPdfPath = project.scriptPdfPath;
             }
 
-            htmlDirectory.getProjectFiles(selectedHTMLPath, slectedSharedPath).then((result) => {
+            htmlDirectory.getProjectFiles(mainWindow.selectedHTMLPath, mainWindow.slectedSharedPath).then((result) => {
                 htmlDirectory.getFilesInSequnecs(result);
-                emitter.emit('filesLoaded');
+                mainWindow.emitter.emit('filesLoaded');
             }).catch((err) => console.log(err));
 
         }
     });
 
 
-    // recent folders added
-    const veevaRecents = new Recent({ fileName: 'veevaRecent' });
-    const oceRecents = new Recent({ fileName: 'oceRecent' });
-
-    mainWindow.webContents.on('did-finish-load', () => {
-
-        // listens request for add project from main window
-        ipcMain.on('open-dialog-trigerd', async (e, recentData) => {
-            console.log(recentData)
-            // closeing edetailWindow before adding anothers project
-            if (!edetailWindow?.isDestroyed()) {
-                if (edetailWindow)
-                    edetailWindow.close();
-            }
-
-            try {
-                selectedHTMLPath = await htmlDirectory.openDialog(mainWindow);
-
-                recentData.path = selectedHTMLPath;
-
-                if (appSettings.get('settings.crm') === 'veeva') {
-                    if (!(appSettings.get('settings.buildWith') === 'dspTool') && recentData.hasShared) {
-                        slectedSharedPath = await placeShared.openDialog(mainWindow);
-                    }
-                    recentData.sharedPath = slectedSharedPath
-                    veevaRecents.addProject(recentData);
-
-                } else if (appSettings.get('settings.crm') === 'oce') {
-                    oceRecents.addProject(recentData);
-                }
-
-                htmlDirectory.getProjectFiles(selectedHTMLPath, slectedSharedPath).then((result) => {
-                    htmlDirectory.getFilesInSequnecs(result);
-                    emitter.emit('filesLoaded');
-                }).catch((err) => console.log(err));
-            }
-            catch (err) {
-                console.log(err);
-            }
-
-        })
-
-        // listens request for opening a recent project
-        ipcMain.on('open/recent-project', async (e, projectId) => {
-            if (!edetailWindow?.isDestroyed()) {
-                if (edetailWindow)
-                    edetailWindow.close();
-            }
-
-            if (appSettings.get('settings.crm') === 'veeva') {
-                const project = veevaRecents.getProject(projectId);
-                veevaRecents.addProject(project);
-                selectedHTMLPath = project.path;
-                scriptPdfPath = project.scriptPdfPath;
-                if (project.hasShared) {
-                    slectedSharedPath = project.sharedPath
-                }
-
-            } else if (appSettings.get('settings.crm') === 'oce') {
-                const project = oceRecents.getProject(projectId);
-                oceRecents.addProject(project);
-                selectedHTMLPath = project.path;
-                scriptPdfPath = project.scriptPdfPath;
-            }
-
-            htmlDirectory.getProjectFiles(selectedHTMLPath, slectedSharedPath).then((result) => {
-                htmlDirectory.getFilesInSequnecs(result);
-                emitter.emit('filesLoaded');
-            }).catch((err) => console.log(err));
-        })
-
-        // listens request for add a pdf script
-        ipcMain.on('add/script-pdf', async (e, args) => {
-            scriptPdfPath = await pdfHandler.openDialog();
-            
-            e.sender.send('script-pdf-selected', scriptPdfPath);
-
-            if (appSettings.get('settings.crm') === 'veeva') {
-                const project = veevaRecents.readData()[0];
-                project.scriptPdfPath = scriptPdfPath;
-                veevaRecents.addProject(project);
-            } else if (appSettings.get('settings.crm') === 'oce') {
-                const project = oceRecents.readData()[0];
-                project.scriptPdfPath = scriptPdfPath;
-                oceRecents.addProject(project);
-            }
-        })
-    })
-
-    // parsing and sending data to renderer and open edetail window function
-    async function openEdetailWindow() {
-        if (!edetailWindow?.isDestroyed()) {
-            if (edetailWindow)
-                edetailWindow.close();
-        }
-        try {
-            edetailerData = fs.readFileSync(path.join(userDataPath, 'oce-data', 'edetailerData.json'));
-            edetailerData = JSON.parse(edetailerData);
-            if (appSettings.get('settings.crm') === 'veeva' && !(appSettings.get('settings.buildWith') === 'dspTool')) {
-                await placeShared.putShared(mainWindow, edetailerData, edetailerData.sharedPath);
-            }
-            if (mainWindow.webContents.isLoading()) {
-                mainWindow.webContents.on('dom-ready', () => {
-                    mainWindow.webContents.send('data-from-main', edetailerData);
-                    pdfHandler.sendPdfPath(mainWindow);
-                })
-            }
-            else {
-                mainWindow.webContents.send('data-from-main', edetailerData);
-                pdfHandler.sendPdfPath(mainWindow);
-            }
-
-
-        } catch (err) {
-            // console.log.log(err)
-        }
-
-        edetailWindow = creatEdetailWindow(edetailerData);
-    }
-
-    pdfHandler.init();
-    proofing.init();
-
-    // checking for last added project if already exist then open it
-    fs.access(path.join(userDataPath, 'oce-data', 'edetailerData.json'), fs.constants.F_OK, (err) => {
-        if (err) {
-            console.log("doesnot exist");
-        }
-        else {
-            openEdetailWindow();
-        }
-    })
-
-    //   ____open edetatil window on click of add btn
-    emitter.on('filesLoaded', (e) => {
-        openEdetailWindow();
-
-    })
     // handling sequance data request from preload.js
     ipcMain.handle("preload/request/sequanceData", (e) => {
         return edetailerData;
     })
 
-    // minimizing main window 
-    ipcMain.on('app/minimize', e => {
-        mainWindow.minimize()
-    })
-    // close main Window
-    ipcMain.on('app/close', e => {
-        mainWindow.close()
-    })
-    // toggleFullscreen main Window
-    ipcMain.on('app/toggleFullscreen', e => {
-        if (mainWindow.isMaximized()) {
-            mainWindow.restore()
-        }
-        else {
-            mainWindow.maximize()
-        }
-    })
-
-
-    mainWindow.on('maximize', () => {
-        mainWindow.webContents.send('isMaximized')
-    })
-
-    mainWindow.on('unmaximize', () => {
-        mainWindow.webContents.send('isRestored')
-    })
-
-    // hadling compress all request
     ipcMain.handle('request-for-compress', async (e, args) => {
         // creating a directory for storing compressed files
-
         let zipFolderPath = await fileSystemUtils.createDirectory(path.resolve(edetailerData.htmlPath, '..'), 'zips');
         let execCompress = await compressFile.compress(args, edetailerData.htmlPath, zipFolderPath);
         return ('Done')
@@ -362,13 +361,12 @@ function createWindow() {
         e.sender.send('images-from-main', sequanceImages)
     })
 
-    // handling reqest for oce conversion
 
     ipcMain.handle('oce-conversion/request', async (e, args) => {
         try {
-            await oceConverter.openDialog(mainWindow);
+            await oceConverter.openDialog(mainWindow.window)
             e.sender.send('oce-converter/files-slected')
-            await oceConverter.convert(mainWindow);
+            await oceConverter.convert(mainWindow.window);
             e.sender.send('oce-converter/conversion-succed', {
                 messageType: 'conversion-succed',
             })
@@ -382,54 +380,37 @@ function createWindow() {
         }
     })
 
-
-    /* 
-     -> comenting below handler for compersing img
-     -> not working in production.
-    */
-
-    /* ipcMain.handle('compress-img-request',(e,args)=>{
-        // console.log.log(args)
-       return (sequanceDataOp.compressImg(args,edetailerData.htmlPath))
-    }) */
-
     ipcMain.on('request-for-screenshot', (e, args) => {
         capturePage(args, screenshot => {
             e.sender.send('response-for-screenshot', screenshot)
         })
 
     })
-
-    // open devTools in devM
-    if (isDev) {
-        mainWindow.webContents.openDevTools({ mode: 'detach' })
-    }
-
-    // Manage new window state
-    state.manage(mainWindow)
-    // Open DevTools - Remove for PRODUCTION!
-    // mainWindow.webContents.openDevTools();
-    // Menu.setApplicationMenu(mainMenu)
-    // Listen for window being closed
-    mainWindow.on('closed', () => {
-        mainWindow = null;
-        // app.quit()
-    })
-    console.log('app resatarted'.rainbow)
-
+    
 }
 
-// app is ready
-app.on('ready', createWindow)
+function edetailWindow_initializeEvents(){
+    ipcMain.on('focus-on-edetailWindow', (e, args) => {
+       const window = edetailWindow.handleFocusOnwindow(args);
+        if(!window){
+            setEdetailWindow(edetailerData);
+        }
+      });
 
-app.on('window-all-closed', () => {
-    if (process.platform != 'darwin') app.quit()
-})
+      ipcMain.on('gotoSlide', (e, args) => {
+       edetailWindow.handleGotoSlide(args, e);
+      })
+    
+      ipcMain.on('goNextSequence', edetailWindow.handleGoNextSequence);
 
+      ipcMain.on('goPreviousSequence', edetailWindow.handleGoPreviousSequence);
 
-// for mac os
-app.on('activate', () => {
-    if (mainWindow === null) createWindow()
-})
+      // going to next slide on right key perssed
+      ipcMain.on('edetailWin/ArrowRight', ()=>{edetailWindow.handleArrowRight()});
+    
+      // going to prev slide on left key perssed
+      ipcMain.on('edetailWin/ArrowLeft', ()=>{edetailWindow.handleArrowLeft()});
+}
+
 
 

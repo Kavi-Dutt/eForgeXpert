@@ -22,8 +22,11 @@ Store.on('change',()=>{
 })
 const init = async function () {
     const tem_dir = await createDirectory(userDataPath, 'tem_dir');
-    const pdfInfo = await pdfHandler.getPdfInfo();
+    const pdfInfo = pdfHandler.getPdfPath()? await pdfHandler.getPdfInfo(): null;
+     
     ipcMain.on('mainwindow/req/proofing', async (e, data) => {
+        if(pdfInfo){
+            
         if (data.pageNumber <= pdfInfo.pages) {
             await generateSlideImage({ url: data.slidePath, width: 1024, height: 768 }, tem_dir);
 
@@ -34,7 +37,7 @@ const init = async function () {
                 page: data.pageNumber,
             })
             
-            const proofing_dir = await createDirectory(path.normalize(data.slidePath + '/../..'), 'proofing');
+            const proofing_dir = await createDirectory(path.normalize(data.slidePath + '/../../..'), 'proofing');
             const scriptImg = path.resolve(tem_dir,`script-temp-${data.pageNumber<10? '0' + data.pageNumber: data.pageNumber}.png`);
 
             const slideImg = path.resolve(tem_dir, 'slide-temp.png');
@@ -50,6 +53,9 @@ const init = async function () {
             deleteFilesFromDirectory(tem_dir);
         };
         console.log(data);
+        } else{
+            e.sender.send('proffing/message', 'no pdf ');
+        }
     })
 
 }

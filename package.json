@@ -1,7 +1,7 @@
 {
-  "name": "edetail-editor",
+  "name": "eForgeXpert",
   "version": "2.0.0",
-  "description": "edetail editor",
+  "description": "eForgeXpert",
   "main": "src/main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -15,7 +15,7 @@
     ]
   },
   "repository": "https://github.com/Kavi-Dutt/edetail-editor.git",
-  "author": "Indegene, kavi.machkoli",
+  "author": "Kavi Dutt Machkoli",
   "license": "ISC",
   "devDependencies": {
     "colors": "^1.4.0",

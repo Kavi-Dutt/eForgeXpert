@@ -15,7 +15,7 @@ class Store {
     static get(configName){
         const userDataPath = app.getPath('userData');
         const configPath  = path.join(userDataPath, configName + '.json');
-        return parseDataFile(configPath);
+        return parseDataFile(configPath, {});
     }
     
     get(key) {
