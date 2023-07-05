@@ -12,7 +12,7 @@ const isDev = require('electron-is-dev');
 
 const { MainWindow } = require('./app-window/mainWindow')
 const { EdetailWindow } = require('./app-window/edetailWin');
-const { htmlDirectory } = require('./modules/OCE_fileToShow');
+const HtmlDirectory = require('./modules/OCE_fileToShow');
 const compressFile = require('./utils/zip/compressFiles');
 const sequanceDataOp = require('./modules/sequanceDataOp');
 const capturePage = require('./utils/image-utils/capturePage');
@@ -31,6 +31,8 @@ let edetailerData;
 const mainWindow = new MainWindow();
 
 let edetailWindow;
+
+const htmlDir = new HtmlDirectory();
 
 const appSettings = new Store({
     confingName: 'user-settings',
@@ -76,7 +78,6 @@ mainWindow.openInVsCode = function (sequancePath) {
 }
 
 mainWindow.openDialog = async function (recentData) {
-    console.log(recentData)
     // closeing edetailWindow before adding anothers project
     if (!edetailWindow?.window?.isDestroyed()) {
         if (edetailWindow?.window)
@@ -84,7 +85,7 @@ mainWindow.openDialog = async function (recentData) {
     }
 
     try {
-        mainWindow.selectedHTMLPath = await htmlDirectory.openDialog(mainWindow.window);
+        mainWindow.selectedHTMLPath = await htmlDir.openDialog(mainWindow.window);
 
         recentData.path = mainWindow.selectedHTMLPath;
 
@@ -99,8 +100,9 @@ mainWindow.openDialog = async function (recentData) {
             oceRecents.addProject(recentData);
         }
 
-        htmlDirectory.getProjectFiles(mainWindow.selectedHTMLPath, mainWindow.slectedSharedPath).then((result) => {
-            htmlDirectory.getFilesInSequnecs(result);
+        htmlDir.getProjectFiles(mainWindow.selectedHTMLPath, mainWindow.slectedSharedPath).then(async (result) => {
+            htmlDir. getFilesInSequences(result);
+            // await htmlDir.writeEdetailerDataFile();
             mainWindow.emitter.emit('filesLoaded');
         }).catch((err) => console.log(err));
     }
@@ -131,8 +133,8 @@ mainWindow.openRecentProject = (projectId) => {
         mainWindow.scriptPdfPath = project.scriptPdfPath;
     }
 
-    htmlDirectory.getProjectFiles(mainWindow.selectedHTMLPath, mainWindow.slectedSharedPath).then((result) => {
-        htmlDirectory.getFilesInSequnecs(result);
+    htmlDir.getProjectFiles(mainWindow.selectedHTMLPath, mainWindow.slectedSharedPath).then((result) => {
+        htmlDir.getFilesInSequences(result);
         mainWindow.emitter.emit('filesLoaded');
     }).catch((err) => console.log(err));
 }
@@ -153,14 +155,27 @@ mainWindow.addScriptPdf = async (e) => {
     }
 }
 
+mainWindow.projectOnStart = ()=>{
+    if (appSettings.get('settings.crm') === 'veeva') {
+        if(veevaRecents.readData()){
+            const project = veevaRecents.readData()[0];
+             mainWindow.openRecentProject(project.projectId);
+        }
+    } else if (appSettings.get('settings.crm') === 'oce') {
+        if(oceRecents.readData()){
+            const project = oceRecents.readData()[0];
+        mainWindow.openRecentProject(project.projectId);
+        }
+    }
+}
+
 mainWindow.openEdetailWindow = async () => {
     if (!edetailWindow?.window?.isDestroyed()) {
         if (edetailWindow?.window)
             edetailWindow?.window.close();
     }
     try {
-        edetailerData = fs.readFileSync(path.join(userDataPath, 'oce-data', 'edetailerData.json'));
-        edetailerData = JSON.parse(edetailerData);
+        edetailerData = htmlDir.getEdetailerData;
         if (appSettings.get('settings.crm') === 'veeva' && !(appSettings.get('settings.buildWith') === 'dspTool')) {
             await placeShared.putShared(mainWindow.window, edetailerData, edetailerData.sharedPath);
         }
@@ -181,16 +196,16 @@ mainWindow.openEdetailWindow = async () => {
     }
 
     setEdetailWindow(edetailerData);
-    edetailWindow_initializeEvents();
 }
 mainWindow.initEvents = mainWindow_initializeEvents;
 
 mainWindow.afterFinishLoad = () => {
     mainWindow.window.webContents.on('did-finish-load', () => {
-
+          ipcMain.removeAllListeners('open-dialog-trigerd');
+          ipcMain.removeAllListeners('open/recent-project');
+          ipcMain.removeAllListeners('add/script-pdf');
         // listens request for add project from main window
         ipcMain.on('open-dialog-trigerd', async (e, recentData) => {
-            console.log(recentData)
             mainWindow.openDialog(recentData);
         })
 
@@ -207,38 +222,8 @@ mainWindow.afterFinishLoad = () => {
 }
 
 
-app.on('ready', function () {
-    mainWindow.createWindow();
-    mainWindow.afterFinishLoad();
-    mainWindow.initEvents();
-    pdfHandler.init();
-    proofing.init();
-    fs.access(path.join(userDataPath, 'oce-data', 'edetailerData.json'), fs.constants.F_OK, (err) => {
-        if (err) {
-            console.log("doesnot exist");
-        }
-        else {
-            mainWindow.openEdetailWindow();
-        }
-    })
-})
-
-app.on('window-all-closed', () => {
-    if (process.platform != 'darwin') app.quit()
-})
-
-
-// for mac os
-app.on('activate', () => {
-    if (mainWindow.window === null) {
-        mainWindow.createWindow();
-        mainWindow.afterFinishLoad();
-    };
-})
-
 function setEdetailWindow(dataForWindow) {
     edetailWindow = new EdetailWindow(dataForWindow);
-
     // Build the menu from the modified template
     const edetailWindowMenu = Menu.buildFromTemplate(edetailWindowMenuTemplate);
 
@@ -261,6 +246,7 @@ function setEdetailWindow(dataForWindow) {
     }
 
     edetailWindow?.window.setMenu(edetailWindowMenu);
+    edetailWindow_initializeEvents()
 }
 
 function mainWindow_initializeEvents() {
@@ -327,8 +313,8 @@ function mainWindow_initializeEvents() {
                 mainWindow.scriptPdfPath = project.scriptPdfPath;
             }
 
-            htmlDirectory.getProjectFiles(mainWindow.selectedHTMLPath, mainWindow.slectedSharedPath).then((result) => {
-                htmlDirectory.getFilesInSequnecs(result);
+            htmlDir.getProjectFiles(mainWindow.selectedHTMLPath, mainWindow.slectedSharedPath).then((result) => {
+                htmlDir. getFilesInSequences(result);
                 mainWindow.emitter.emit('filesLoaded');
             }).catch((err) => console.log(err));
 
@@ -390,6 +376,13 @@ function mainWindow_initializeEvents() {
 }
 
 function edetailWindow_initializeEvents(){
+    ipcMain.removeAllListeners('focus-on-edetailWindow');
+    ipcMain.removeAllListeners('gotoSlide');
+    ipcMain.removeAllListeners('goNextSequence');
+    ipcMain.removeAllListeners('goPreviousSequence');
+    ipcMain.removeAllListeners('edetailWin/ArrowRight');
+    ipcMain.removeAllListeners('edetailWin/ArrowLeft');
+    
     ipcMain.on('focus-on-edetailWindow', (e, args) => {
        const window = edetailWindow.handleFocusOnwindow(args);
         if(!window){
@@ -412,5 +405,28 @@ function edetailWindow_initializeEvents(){
       ipcMain.on('edetailWin/ArrowLeft', ()=>{edetailWindow.handleArrowLeft()});
 }
 
+app.on('ready', function () {
+    mainWindow.createWindow();
+    mainWindow.afterFinishLoad();
+    mainWindow.initEvents();
+    pdfHandler.init();
+    proofing.init();
+    mainWindow.projectOnStart();
+    
+})
 
+app.on('window-all-closed', () => {
+    htmlDir.deleteEdetailerDataFile();
+    if (process.platform != 'darwin') app.quit();
+
+})
+
+
+// for mac os
+app.on('activate', () => {
+    if (mainWindow.window === null) {
+        mainWindow.createWindow();
+        mainWindow.afterFinishLoad();
+    };
+})
 

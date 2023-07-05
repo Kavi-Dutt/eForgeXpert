@@ -90,47 +90,4 @@ module.exports = {
     MainWindow,
 }
 
-// // Create the main window instance
-// const mainWindow = new MainWindow();
-
-// // Event listeners
-// ipcMain.on('minimize-app', () => {
-//   mainWindow.minimizeApp();
-// });
-
-// ipcMain.on('close-app', () => {
-//   mainWindow.closeApp();
-// });
-
-// ipcMain.on('toggle-fullscreen', () => {
-//   mainWindow.toggleFullscreen();
-// });
-
-// ipcMain.on('open-dialog', () => {
-//   mainWindow.openDialog();
-// });
-
-// ipcMain.on('open-recent-project', (_, projectId) => {
-//   mainWindow.openRecentProject(projectId);
-// });
-
-// // ...
-
-// // Create main window when app is ready
-// app.whenReady().then(() => {
-//   mainWindow.createWindow();
-
-//   // ...
-
-//   // Quit when all windows are closed
-//   app.on('window-all-closed', () => {
-//     if (process.platform !== 'darwin') {
-//       app.quit();
-//     }
-//   });
-
-//   // ...
-// });
-
-// ...
 

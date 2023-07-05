@@ -1,128 +1,148 @@
-const {
-    app,
-    ipcMain,
-    dialog
-} = require('electron')
-const path = require('path')
-const {
-    opendir,
-    readdir
-} = require('fs/promises');
-const fs = require('fs')
+const { app, ipcMain, dialog } = require('electron');
+const path = require('path');
+const { opendir } = require('fs/promises');
+const fs = require('fs');
 
-//const colors = require('colors');
-const {
-    get
-} = require('http');
-const pathToDDrive = path.join('D:\\');
-
-
-let projectFolders, sequancePath;
-let edetailer = {
-    drive: '',
-    htmlPath: null,
-    sequences: [],
-    firstSequence: '',
-    filesInSequence: {}
-
-}
-
-async function openDialog(windowName) {
-    return new Promise((resolve, reject) => {
-        ipcMain.handle('open-dialog', async () => {
-            let dialogReturn = await dialog.showOpenDialog(windowName, {
-                properties: ['openDirectory']
-            })
-            if (!dialogReturn.canceled && dialogReturn.filePaths) {
-                resolve(dialogReturn.filePaths[0]);
-            } else {
-                reject('no slection');
-            }
-            ipcMain.removeHandler('open-dialog');
-            return 'dialog opened';
-        })
-    })
-}
-
-// async
-async function getProjectFiles(selectedPath, sharedPath) {
-        return new Promise(async (resolve, reject) => {
-            projectFolders = selectedPath.split('\\');
-            let drive = projectFolders.shift()
-            //    adding drvie name to edetailer object
-            sharedPath ? edetailer.sharedPath = sharedPath : '';
-            edetailer.drive = drive;
-            let lastFolder = projectFolders[projectFolders.length - 1]
-            // console.log.log(colors.magenta(projectFolders))
-            // if (lastFolder === 'HTML') {
-                edetailer.htmlPath = selectedPath;
-                edetailer.sequences = []
-                const dir = await opendir(selectedPath)
-                for await (const dirent of dir) {
-                    edetailer.sequences.push(dirent.name)
-                }
-                //  // console.log.log(colors.cyan(edetailer.sequences))
-
-                // sorting sequneces 
-                edetailer.sequences.sort(new Intl.Collator('en', {
-                    numeric: true,
-                    sensitivity: 'accent'
-                }).compare)
-
-                resolve(edetailer)
-            // } else {
-            //     reject(new Error('please select a vaild path'.bgRed))
-            // }
-        })
-
-}
-
-function getFilesInSequnecs(result) {
-    edetailer = result;
-    edetailer.filesInSequence = {};
-    let sequenceList = edetailer.sequences;
-    sequenceList.forEach(sequanceName => {
-        // // console.log.log(colors.bold(sequanceName))
-        sequancePath = path.join(edetailer.htmlPath, sequanceName)
-        try {
-            let filenames = fs.readdirSync(sequancePath)
-            edetailer.filesInSequence[sequanceName] = filenames
-
-        } catch (err) {
-            // console.log.log(err.message)
-        }
-
-    })
-    let edetailerData = JSON.stringify(edetailer);
-
-    const userDataPath = app.getPath('userData');
-
-    const oceDataFolder = path.join(userDataPath, "oce-data");
-
-    fs.mkdirSync(oceDataFolder, {
-        recursive: true
-    });
-
-    const edetailerData_JsonPath = path.join(oceDataFolder, 'edetailerData.json');
-
-    try {
-        fs.writeFileSync(edetailerData_JsonPath, edetailerData);
-    } catch (err) {
-        // console.log.log(err)
+class HtmlDirectory {
+    constructor() {
+        this.pathToDDrive = path.join('D:\\');
+        this.edetailer = {
+            drive: '',
+            htmlPath: null,
+            sequences: [],
+            firstSequence: '',
+            filesInSequence: {}
+        };
+        this.edetailerDataFolder = path.join(app.getPath('userData'), 'edetailer-data');
+        this.edetailerDataPath = path.join(this.edetailerDataFolder, 'edetailerData.json');
     }
 
-    // // console.log.log(colors.magenta(edetailerData))
-    // // console.log.log(colors.bgCyan(edetailer.filesInSequence))
-    // console.log.log(colors.brightYellow(edetailer))
-    // // console.log.log(edetailer.filesInSequence[sequanceName].filter((html)=>html.match(/.*\.(html?)/ig)))
+    setEdetailerProperty(property, value) {
+        this.edetailer[property] = value;
+        return this.writeEdetailerDataFile();
+    }
+
+    async openDialog(windowName) {
+        return new Promise((resolve, reject) => {
+            ipcMain.handle('open-dialog', async () => {
+                try {
+                    const dialogReturn = await dialog.showOpenDialog(windowName, {
+                        properties: ['openDirectory']
+                    });
+
+                    if (!dialogReturn.canceled && dialogReturn.filePaths) {
+                        resolve(dialogReturn.filePaths[0]);
+                    } else {
+                        reject('no selection');
+                    }
+                } catch (error) {
+                    reject(error);
+                }
+
+                ipcMain.removeHandler('open-dialog');
+                return 'dialog opened';
+            });
+        });
+    }
+
+    async getProjectFiles(selectedPath, sharedPath) {
+        
+        this.edetailer = {
+            drive: '',
+            htmlPath: null,
+            sequences: [],
+            firstSequence: '',
+            filesInSequence: {}
+        };
+        
+        return new Promise(async (resolve, reject) => {
+            const projectFolders = selectedPath.split('\\');
+            const drive = projectFolders.shift();
+
+            if (sharedPath) {
+                this.edetailer.sharedPath = sharedPath;
+            }
+
+            this.edetailer.drive = drive;
+            const lastFolder = projectFolders[projectFolders.length - 1];
+
+            try {
+                if (lastFolder === 'HTML') {
+                    this.edetailer.htmlPath = selectedPath;
+                    this.edetailer.sequences = [];
+                    const dir = await opendir(selectedPath);
+
+                    for await (const dirent of dir) {
+                        this.edetailer.sequences.push(dirent.name);
+                    }
+
+                    this.edetailer.sequences.sort(new Intl.Collator('en', {
+                        numeric: true,
+                        sensitivity: 'accent'
+                    }).compare);
+
+                    resolve(this.edetailer);
+                } else {
+                    reject(new Error('Please select a valid path.'));
+                }
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+
+    getFilesInSequences(result) {
+        this.edetailer = result;
+        this.edetailer.filesInSequence = {};
+        const sequenceList = this.edetailer.sequences;
+
+        sequenceList.forEach((sequenceName) => {
+            const sequencePath = path.join(this.edetailer.htmlPath, sequenceName);
+
+            try {
+                const filenames = fs.readdirSync(sequencePath);
+                this.edetailer.filesInSequence[sequenceName] = filenames;
+            } catch (error) {
+                // Handle error if needed
+            }
+        });
+
+        this.writeEdetailerDataFile();
+    }
+
+    writeEdetailerDataFile() {
+        try {
+            fs.mkdirSync(this.edetailerDataFolder, {
+                recursive: true
+            });
+            const edetailerData = JSON.stringify(this.edetailer);
+            // fs.writeFile(this.edetailerDataPath, edetailerData);
+            fs.writeFileSync(this.edetailerDataPath, edetailerData);
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    get getEdetailerData() {
+        try {
+            const data = fs.readFileSync(this.edetailerDataPath, 'utf8');
+            return JSON.parse(data);
+        } catch (error) {
+            throw new Error(`Error reading edetailerData.json: ${error}`);
+        }
+    }
+
+    deleteEdetailerDataFile() {
+        return new Promise((resolve, reject) => {
+            fs.unlink(this.edetailerDataPath, (err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
 }
 
-
-exports.htmlDirectory = {
-    openDialog: openDialog,
-    getProjectFiles: getProjectFiles,
-    getFilesInSequnecs: getFilesInSequnecs,
-    pathToDDrive: pathToDDrive,
-}
-
-exports.edetailer = edetailer
+module.exports = HtmlDirectory;

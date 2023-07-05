@@ -5,6 +5,7 @@ const fs = require('fs');
 
 class EdetailWindow {
   constructor(dataForWindow) {
+    this.window= null;
     this.isDataLoaded = false;
     this.edetailerData = dataForWindow;
     this.counterIndex = 0;
@@ -46,6 +47,7 @@ class EdetailWindow {
   }
 
   handleWindowClosed() {
+    console.log('edetail close');
     this.window = null;
   }
 
