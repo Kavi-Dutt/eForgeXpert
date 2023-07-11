@@ -18,7 +18,6 @@ let appSettings = settings;
 Store.on('change',()=>{
     const { settings } = Store.get('user-settings');
     appSettings = settings;
-    console.log(appSettings.proofingLevel);
 })
 const init = async function () {
     const tem_dir = await createDirectory(userDataPath, 'tem_dir');
@@ -43,7 +42,6 @@ const init = async function () {
             const slideImg = path.resolve(tem_dir, 'slide-temp.png');
 
             const outputPath = path.resolve(proofing_dir, `${path.basename(path.dirname(data.slidePath))}.png`);
-            console.log(data.pageNumber<10? '0' + data.pageNumber: data.pageNumber);
             initProofing({scriptImg, slideImg, outputPath});
             try{
                shell.openPath(outputPath);

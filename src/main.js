@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu,  ipcMain, } = require('electron')
+const { app, BrowserWindow, Menu, ipcMain, } = require('electron')
 
 const path = require('path')
 const fs = require('fs');
@@ -77,6 +77,54 @@ mainWindow.openInVsCode = function (sequancePath) {
     });
 }
 
+// creating json file for  each presentation path's data
+mainWindow.readMultichannelFiles = async function (presentationsPath) {
+    let i = 0;
+    for await (const presentationPath of presentationsPath) {
+        const result = await htmlDir.getProjectFiles(presentationPath, mainWindow.slectedSharedPath)
+        if (i === 0) {
+            const fileName = `edetailerData.json`
+            htmlDir.getFilesInSequences(result, fileName);
+            mainWindow.presentationDataFiles.push(fileName);
+        } else {
+            const fileName = `edetailerData-${i}.json`;
+            htmlDir.getFilesInSequences(result, fileName);
+            mainWindow.presentationDataFiles.push(fileName);
+            if (mainWindow.slectedSharedPath) {
+                await placeShared.putShared(mainWindow.window, htmlDir.getEdetailerData(`edetailerData-${i}.json`), mainWindow.slectedSharedPath);
+            };
+        }
+        i++;
+    }
+}
+
+// opening and initializing multichannnle presentation in app
+mainWindow.openMultiChannelPresentation = async function (recentData) {
+    try {
+        if (recentData.isMultichannel) {
+            mainWindow.selectedHTMLPath = recentData.presentations.presentationsPath[0];
+            htmlDir.edetailer.persentations = recentData.presentations;
+            mainWindow.presentations = recentData.presentations;
+            recentData.path = mainWindow.selectedHTMLPath;
+
+            if (appSettings.get('settings.crm') === 'veeva') {
+                if (!(appSettings.get('settings.buildWith') === 'dspTool') && recentData.hasShared) {
+                    mainWindow.slectedSharedPath = await placeShared.openDialog(mainWindow.window);
+                }
+                recentData.sharedPath = mainWindow.slectedSharedPath;
+                veevaRecents.addProject(recentData);
+            }
+
+            const presentationsPath = recentData.presentations.presentationsPath;
+            await this.readMultichannelFiles(presentationsPath);
+            mainWindow.emitter.emit('filesLoaded');
+        }
+    } catch (err) {
+        console.log(`error occured in handling multichannel prsentation => ${err}`)
+    }
+}
+
+// initializing project start with project  path selection
 mainWindow.openDialog = async function (recentData) {
     // closeing edetailWindow before adding anothers project
     if (!edetailWindow?.window?.isDestroyed()) {
@@ -85,6 +133,7 @@ mainWindow.openDialog = async function (recentData) {
     }
 
     try {
+
         mainWindow.selectedHTMLPath = await htmlDir.openDialog(mainWindow.window);
 
         recentData.path = mainWindow.selectedHTMLPath;
@@ -101,7 +150,7 @@ mainWindow.openDialog = async function (recentData) {
         }
 
         htmlDir.getProjectFiles(mainWindow.selectedHTMLPath, mainWindow.slectedSharedPath).then(async (result) => {
-            htmlDir. getFilesInSequences(result);
+            htmlDir.getFilesInSequences(result);
             // await htmlDir.writeEdetailerDataFile();
             mainWindow.emitter.emit('filesLoaded');
         }).catch((err) => console.log(err));
@@ -111,19 +160,20 @@ mainWindow.openDialog = async function (recentData) {
     }
 }
 
-mainWindow.openRecentProject = (projectId) => {
+mainWindow.openRecentProject = async (projectId) => {
     if (!edetailWindow?.window?.isDestroyed()) {
         if (edetailWindow?.window)
             edetailWindow?.window.close();
     }
 
+    let veevaProject;
     if (appSettings.get('settings.crm') === 'veeva') {
-        const project = veevaRecents.getProject(projectId);
-        veevaRecents.addProject(project);
-        mainWindow.selectedHTMLPath = project.path;
-        mainWindow.scriptPdfPath = project.scriptPdfPath;
-        if (project.hasShared) {
-            mainWindow.slectedSharedPath = project.sharedPath
+        veevaProject = veevaRecents.getProject(projectId);
+        veevaRecents.addProject(veevaProject);
+        mainWindow.selectedHTMLPath = veevaProject.path;
+        mainWindow.scriptPdfPath = veevaProject.scriptPdfPath;
+        if (veevaProject.hasShared) {
+            mainWindow.slectedSharedPath = veevaProject.sharedPath;
         }
 
     } else if (appSettings.get('settings.crm') === 'oce') {
@@ -133,10 +183,43 @@ mainWindow.openRecentProject = (projectId) => {
         mainWindow.scriptPdfPath = project.scriptPdfPath;
     }
 
-    htmlDir.getProjectFiles(mainWindow.selectedHTMLPath, mainWindow.slectedSharedPath).then((result) => {
-        htmlDir.getFilesInSequences(result);
+    try {
+        if (appSettings.get('settings.crm') === 'veeva' && veevaProject.isMultichannel) {
+            const presentationsPath = veevaProject.presentations.presentationsPath;
+            await mainWindow.readMultichannelFiles(presentationsPath);
+        } else {
+            const result = await htmlDir.getProjectFiles(mainWindow.selectedHTMLPath, mainWindow.slectedSharedPath);
+            htmlDir.getFilesInSequences(result);
+        }
         mainWindow.emitter.emit('filesLoaded');
-    }).catch((err) => console.log(err));
+    } catch (err) {
+        console.log(err)
+    }
+}
+
+mainWindow.openPresentation = async (presentationId, options) => {
+    const { reloadEdetailWin } = options || { reloadEdetailWin: true };
+    try {
+        if (appSettings.get('settings.crm') === 'veeva' && presentationId) {
+            const presentaionId_index = mainWindow.presentations.presentationsId.indexOf(presentationId);
+            const jsonDataFile = mainWindow.presentationDataFiles[presentaionId_index];
+            const data = htmlDir.getEdetailerData(jsonDataFile);
+
+            // open presentation if slected from dropdown
+            if (reloadEdetailWin) {
+                edetailerData = data;
+                mainWindow.window.webContents.send('data-from-main', data);
+                edetailWindow.edetailerData = data;
+                edetailWindow.handleGotoSlide(data.sequences[0]);
+            } else {
+                // if goto slide trigered in edetail window,
+                edetailWindow.edetailerData = data;
+            }
+        }
+    } catch (err) {
+        console.log(err)
+    }
+
 }
 
 mainWindow.addScriptPdf = async (e) => {
@@ -155,16 +238,18 @@ mainWindow.addScriptPdf = async (e) => {
     }
 }
 
-mainWindow.projectOnStart = ()=>{
-    if (appSettings.get('settings.crm') === 'veeva') {
-        if(veevaRecents.readData()){
+
+mainWindow.projectOnStart = () => {
+    if (appSettings.get('settings.crm') === 'veeva' && fs.existsSync(path.join(userDataPath, 'veevaRecent.json'))) {
+        if (veevaRecents.readData().length > 0) {
             const project = veevaRecents.readData()[0];
-             mainWindow.openRecentProject(project.projectId);
+            mainWindow.presentations = project.presentations;
+            mainWindow.openRecentProject(project?.projectId);
         }
-    } else if (appSettings.get('settings.crm') === 'oce') {
-        if(oceRecents.readData()){
+    } else if (appSettings.get('settings.crm') === 'oce' && fs.existsSync(path.join(userDataPath, 'oceRecent.json'))) {
+        if (oceRecents.readData().length > 0) {
             const project = oceRecents.readData()[0];
-        mainWindow.openRecentProject(project.projectId);
+            mainWindow.openRecentProject(project.projectId);
         }
     }
 }
@@ -175,7 +260,7 @@ mainWindow.openEdetailWindow = async () => {
             edetailWindow?.window.close();
     }
     try {
-        edetailerData = htmlDir.getEdetailerData;
+        edetailerData = htmlDir.getEdetailerData();
         if (appSettings.get('settings.crm') === 'veeva' && !(appSettings.get('settings.buildWith') === 'dspTool')) {
             await placeShared.putShared(mainWindow.window, edetailerData, edetailerData.sharedPath);
         }
@@ -201,9 +286,12 @@ mainWindow.initEvents = mainWindow_initializeEvents;
 
 mainWindow.afterFinishLoad = () => {
     mainWindow.window.webContents.on('did-finish-load', () => {
-          ipcMain.removeAllListeners('open-dialog-trigerd');
-          ipcMain.removeAllListeners('open/recent-project');
-          ipcMain.removeAllListeners('add/script-pdf');
+        ipcMain.removeAllListeners('open-dialog-trigerd');
+        ipcMain.removeAllListeners('open/recent-project');
+        ipcMain.removeAllListeners('add/script-pdf');
+        ipcMain.removeHandler('req/selectPresentation');
+        ipcMain.removeAllListeners('req/open-multichannel-presentation');
+
         // listens request for add project from main window
         ipcMain.on('open-dialog-trigerd', async (e, recentData) => {
             mainWindow.openDialog(recentData);
@@ -218,6 +306,16 @@ mainWindow.afterFinishLoad = () => {
         ipcMain.on('add/script-pdf', async (e, args) => {
             mainWindow.addScriptPdf(e);
         })
+
+        // listing for persenation slection in mainWindow
+        ipcMain.handle('req/selectPresentation', async (e, args) => {
+            return await htmlDir.openDialog(mainWindow.window);
+        });
+
+        // listening for opening of project 
+        ipcMain.on('req/open-multichannel-presentation', (e, recentData) => {
+            mainWindow.openMultiChannelPresentation(recentData);
+        });
     })
 }
 
@@ -284,7 +382,7 @@ function mainWindow_initializeEvents() {
         return appSettings.get('settings');
     });
 
-    ipcMain.handle('set/settings', (e, value) => {
+    ipcMain.handle('set/settings', async (e, value) => {
         const currentCrm = appSettings.get('settings.crm')
         appSettings.set('settings', value);
         BrowserWindow.getAllWindows().forEach(window => {
@@ -301,23 +399,42 @@ function mainWindow_initializeEvents() {
 
             if (appSettings.get('settings.crm') === 'veeva') {
                 const project = veevaRecents.readData()[0];
-                mainWindow.selectedHTMLPath = project.path;
-                mainWindow.scriptPdfPath = project.scriptPdfPath;
-                if (project.hasShared) {
-                    mainWindow.slectedSharedPath = project.sharedPath;
+
+                if(project?.isMultichannel){
+                    mainWindow.selectedHTMLPath = project.presentations.presentationsPath[0];
+                    htmlDir.edetailer.persentations = project.presentations;
+                    mainWindow.presentations = project.presentations;
+                    const presentationsPath = project.presentations.presentationsPath;
+                    await mainWindow.readMultichannelFiles(presentationsPath);
+                }else{
+                    mainWindow.selectedHTMLPath = project?.path;
                 }
 
+                mainWindow.scriptPdfPath = project?.scriptPdfPath;
+
+                if (project?.hasShared) {
+                    mainWindow.slectedSharedPath = project?.sharedPath;
+                }
+                if(project?.isMultichannel){
+                    mainWindow.emitter.emit('filesLoaded');
+                    return;
+                }
             } else if (appSettings.get('settings.crm') === 'oce') {
                 const project = oceRecents.readData()[0];
-                mainWindow.selectedHTMLPath = project.path;
-                mainWindow.scriptPdfPath = project.scriptPdfPath;
+                mainWindow.selectedHTMLPath = project?.path;
+                mainWindow.scriptPdfPath = project?.scriptPdfPath;
             }
 
-            htmlDir.getProjectFiles(mainWindow.selectedHTMLPath, mainWindow.slectedSharedPath).then((result) => {
-                htmlDir. getFilesInSequences(result);
+            if (mainWindow.selectedHTMLPath) {
+               try{
+                const result = await htmlDir.getProjectFiles(mainWindow.selectedHTMLPath, mainWindow.slectedSharedPath);
+                htmlDir.getFilesInSequences(result);
                 mainWindow.emitter.emit('filesLoaded');
-            }).catch((err) => console.log(err));
-
+               }
+               catch(err){
+                console.log(err)
+               }
+            }
         }
     });
 
@@ -372,37 +489,52 @@ function mainWindow_initializeEvents() {
         })
 
     })
-    
+
+    ipcMain.on('req/remove-shared', function () {
+        if (appSettings.get('settings.crm') === 'veeva') {
+            placeShared.deleteSharedSymLinks(edetailerData);
+        }
+    });
+
+    // listent for changing of presentation from dropdown
+    ipcMain.on('req/change-presentation', (e, persentationId) => {
+        mainWindow.openPresentation(persentationId);
+    })
+
 }
 
-function edetailWindow_initializeEvents(){
+function edetailWindow_initializeEvents() {
     ipcMain.removeAllListeners('focus-on-edetailWindow');
     ipcMain.removeAllListeners('gotoSlide');
     ipcMain.removeAllListeners('goNextSequence');
     ipcMain.removeAllListeners('goPreviousSequence');
     ipcMain.removeAllListeners('edetailWin/ArrowRight');
     ipcMain.removeAllListeners('edetailWin/ArrowLeft');
-    
+
     ipcMain.on('focus-on-edetailWindow', (e, args) => {
-       const window = edetailWindow.handleFocusOnwindow(args);
-        if(!window){
+        const window = edetailWindow.handleFocusOnwindow(args);
+        if (!window) {
             setEdetailWindow(edetailerData);
         }
-      });
+    });
 
-      ipcMain.on('gotoSlide', (e, args) => {
-       edetailWindow.handleGotoSlide(args, e);
-      })
-    
-      ipcMain.on('goNextSequence', edetailWindow.handleGoNextSequence);
+    ipcMain.on('gotoSlide', async (e, args) => {
+        // console.log(args)
+        if(appSettings.get('settings.crm') === 'veeva'){
+            await mainWindow.openPresentation(encodeURIComponent(args.presentation), { reloadEdetailWin: false });
+        }
+        edetailWindow.handleGotoSlide(args.slideName, e);
+    })
 
-      ipcMain.on('goPreviousSequence', edetailWindow.handleGoPreviousSequence);
+    ipcMain.on('goNextSequence', edetailWindow.handleGoNextSequence);
 
-      // going to next slide on right key perssed
-      ipcMain.on('edetailWin/ArrowRight', ()=>{edetailWindow.handleArrowRight()});
-    
-      // going to prev slide on left key perssed
-      ipcMain.on('edetailWin/ArrowLeft', ()=>{edetailWindow.handleArrowLeft()});
+    ipcMain.on('goPreviousSequence', edetailWindow.handleGoPreviousSequence);
+
+    // going to next slide on right key perssed
+    ipcMain.on('edetailWin/ArrowRight', () => { edetailWindow.handleArrowRight() });
+
+    // going to prev slide on left key perssed
+    ipcMain.on('edetailWin/ArrowLeft', () => { edetailWindow.handleArrowLeft() });
 }
 
 app.on('ready', function () {
@@ -412,7 +544,7 @@ app.on('ready', function () {
     pdfHandler.init();
     proofing.init();
     mainWindow.projectOnStart();
-    
+
 })
 
 app.on('window-all-closed', () => {

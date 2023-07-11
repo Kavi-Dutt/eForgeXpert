@@ -23,69 +23,113 @@ function openDialog(browserWindow) {
     })
 }
 
+
+
 // async function putShared(browserWindow, edetailerData, sharedPath) {
-//     const htmlPath = edetailerData.htmlPath;
-//     try {
+//   const htmlPath = edetailerData.htmlPath;
+//   try {
+//     if (edetailerData && sharedPath) {
 //       for (const sequence of edetailerData.sequences) {
 //         const sequencePath = path.join(htmlPath, sequence);
 //         const currentFolder = path.basename(sequencePath);
-  
+
 //         const newShared = path.join(sequencePath, 'shared');
-//         console.log(`sequancePath:${sequencePath}`);
-//         await fsPromises.mkdir(newShared, {recursive:true});
-//         await fsPromises.cp(sharedPath, newShared, {recursive:true});
-  
-//         console.log(`Shared successfully placed inside ${sequencePath}`);
+
+//         try {
+//           const stats = await fsPromises.lstat(newShared);
+//           if (stats.isSymbolicLink() || stats.isDirectory()) {
+//             console.log(`Shared symlink or "shared" folder already exists in ${sequencePath}`);
+//             continue; 
+//           }
+//         } catch (error) {
+//           await fsPromises.symlink(sharedPath, newShared, 'dir');
+//           console.log(`Shared successfully placed inside ${sequencePath}`);
+//         }
+
 //         browserWindow.webContents.send('oce-conversion/added-shared', {
 //           folderName: currentFolder,
 //           messageType: 'addedShared',
 //         });
 //       }
-  
+
 //       return 'Successfully converted all the files';
-//     } catch (error) {
-//       console.error(error);
-//       throw error;
 //     }
+//   } catch (error) {
+//     console.error(error);
+//     throw error;
 //   }
+// }
 
+async function putShared(browserWindow, edetailerData, sharedPath) {
+  const htmlPath = edetailerData.htmlPath;
+  try {
+    if (edetailerData && sharedPath) {
+      for (const sequence of edetailerData.sequences) {
+        const sequencePath = path.join(htmlPath, sequence);
+        const currentFolder = path.basename(sequencePath);
 
-  async function putShared(browserWindow, edetailerData, sharedPath) {
-    const htmlPath = edetailerData.htmlPath;
-    try {
-      if(edetailerData && sharedPath){
-        for (const sequence of edetailerData.sequences) {
-          const sequencePath = path.join(htmlPath, sequence);
-          const currentFolder = path.basename(sequencePath);
-      
-          const newShared = path.join(sequencePath, 'shared');
-      
-          // Check if the symlink already exists
-          try {
-            await fsPromises.lstat(newShared);
-            console.log(`Shared symlink already exists in ${sequencePath}`);
-            continue; // Skip creating the symlink
-          } catch (error) {
-            // Symlink does not exist, proceed with creation
-            // await fsPromises.mkdir(newShared, { recursive: true });
-            await fsPromises.symlink(sharedPath, newShared, 'dir');
-            console.log(`Shared successfully placed inside ${sequencePath}`);
+        const newShared = path.join(sequencePath, 'shared');
+
+        try {
+          await fsPromises.access(newShared, fs.constants.R_OK);
+          console.log(`Shared symlink or "shared" folder already exists in ${sequencePath}`);
+          continue;
+        } catch (error) {
+          if (error.code !== 'ENOENT') {
+            console.error(`Error accessing ${newShared}: ${error.message}`);
+            continue;
           }
-      
-          browserWindow.webContents.send('oce-conversion/added-shared', {
-            folderName: currentFolder,
-            messageType: 'addedShared',
-          });
         }
-      
-        return 'Successfully converted all the files';
+
+        try {
+          await fsPromises.symlink(sharedPath, newShared, 'dir');
+          console.log(`Shared successfully placed inside ${sequencePath}`);
+        } catch (error) {
+          console.error(`Error creating symlink in ${sequencePath}: ${error.message}`);
+          continue;
+        }
+
+        browserWindow.webContents.send('oce-conversion/added-shared', {
+          folderName: currentFolder,
+          messageType: 'addedShared',
+        });
       }
-    } catch (error) {
-      console.error(error);
-      throw error;
+
+      return 'Successfully converted all the files';
     }
+  } catch (error) {
+    console.error(error);
+    throw error;
   }
-  
+}
+
+
+async function deleteSharedSymLinks(edetailerData) {
+  try {
+    const htmlPath = edetailerData.htmlPath;
+    if (edetailerData && htmlPath) {
+      for (const sequence of edetailerData.sequences) {
+        const sequencePath = path.join(htmlPath, sequence);
+        const sharedPath = path.join(sequencePath, 'shared');
+
+        try {
+          const stats = await fsPromises.lstat(sharedPath);
+          if (stats.isSymbolicLink()) {
+            await fsPromises.unlink(sharedPath);
+            console.log(`Shared symlink deleted from ${sequencePath}`);
+          }
+        } catch (error) {
+          // Ignore if the symlink doesn't exist
+        }
+      }
+    }
+    return 'Successfully deleted all the symlinks';
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
+
   
 
-exports.placeShared = {putShared, openDialog};
+exports.placeShared = {putShared, openDialog, deleteSharedSymLinks};

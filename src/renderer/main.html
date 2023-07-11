@@ -16,6 +16,14 @@
                 <p class="project-id-container">project Id: <span class="project-id">VVF-1208</span></p>
                 <p class="project-location-container">Location: <input type="text"  class="project-location" value="File:///D:/others/App_Dev/edetail-editor_OCE/test-eda-OCE/HTML/07_RO_SMPCAndPrescribingInformation_SMPC1/"></p>
                 <p class="slide-number-container">Total Slides: <span class="slides-number">49</span></p>
+                <div id="multichannel-nav">
+                    <!-- <p class="current-presentation">PRO_1066316_AT_2023_2_JAR_IND_DE_DDA GPs</p>
+                    <div class="multichannel-dropdown d-none">
+                        <P>PRO_1066316_AT_2023_2_JAR_IND_DE_DDA GPs</P>
+                        <P>PRO_1066316_AT_2023_2_JAR_IND_DE_DDA GPs_Popup</P>
+                        <P>PRO_1066316_AT_2023_2_JAR_IND_DE_DDA GPs_RF</P>
+                    </div> -->
+                </div>
             </div>
             <!-- <button id="OCE-converter_btn"><span>OCE Converter</span></button> -->
         </div>
@@ -60,10 +68,27 @@
                                         <label for="has-shared-checkbox">Has Shared: </label>
                                         <input type="checkbox" name="hasShared" id="has-shared-checkbox" value="shared">
                                     </p>
-                                    <p class="disable">
-                                        <label for="is-multichannel">MultiChannel Persentation:  </label>
+                                    <p>
+                                        <label for="is-multichannel">MultiChannel Presentation:  </label>
                                         <input type="checkbox" name="is-multichannel" id="is-multichannel">
                                     </p>
+                                        <div id="presentationId-block">
+                                            <p>
+                                                <label for="presentationId-input">Presentation Id</label>
+                                                <input type="text" name="presentationId-input" value="" id="presentationId-input">
+                                            </p>
+                                            <!-- <p>
+                                                <input type="file" id="presentation-folderInput" class="disable" webkitdirectory directory >
+                                            </p> -->
+
+                                            <button id="add-presentationButton" class="btn-type-3 disable">Add</button>
+
+                                            <div id="presentationId-container">
+                                                <!-- <p>mainPresentation</p>
+                                                <p>popupPresentation</p>
+                                                <p>refPresentation</p> -->
+                                            </div>
+                                        </div>
                                 </div>
                             </form>
                         </div>
@@ -183,10 +208,11 @@
                             <div class="all-sequances">
                             <div id="all-sequances_nav">
                                 <div id="all-sequances_left-nav">
-                                    <button data-tooltip="rename all slides" class="rename-sequances btn-type-2 ">
-                                        Rename All</button>
+                                    <!-- <button data-tooltip="rename all slides" class="rename-sequances btn-type-2 ">
+                                        Rename All</button> -->
                                     <button data-tooltip="zip all slides" class="compress-all-btn zip-all btn-type-2">
                                         Zip All</button>
+                                    <button data-tooltip="remove shared from all sldies" id="remove-shared-btn" class="btn-type-2  d-none">Remove Shared</button>
                                 </div>
                                 <div id="all-sequances_right-nav">
                                     <input class="search-sequance" type="text" placeholder="Search..">

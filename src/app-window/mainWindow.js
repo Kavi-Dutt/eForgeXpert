@@ -10,6 +10,8 @@ class MainWindow {
     this.selectedHTMLPath = '';
     this.slectedSharedPath = '';
     this.scriptPdfPath = '';
+    this.presentations = {};
+    this.presentationDataFiles = [];
     this.emitter = new EventEmitter();
   }
 
@@ -26,7 +28,7 @@ class MainWindow {
       height: state.height,
       frame: false,
       webPreferences: {
-        devTools: true,
+        devTools: isDev ? true: false,
         contextIsolation: false,
         nodeIntegration: true,
         webviewTag: true,

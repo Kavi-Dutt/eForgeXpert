@@ -1,7 +1,10 @@
 const { app, ipcMain, dialog } = require('electron');
 const path = require('path');
 const { opendir } = require('fs/promises');
+const { promises: fsPromises } = require('fs');
 const fs = require('fs');
+
+const {deleteFilesFromDirectory} = require('../utils/file-io/fileSystemUtils')
 
 class HtmlDirectory {
     constructor() {
@@ -22,9 +25,31 @@ class HtmlDirectory {
         return this.writeEdetailerDataFile();
     }
 
+    // async openDialog(windowName) {
+    //     return new Promise((resolve, reject) => {
+    //         ipcMain.handle('open-dialog', async () => {
+    //             try {
+    //                 const dialogReturn = await dialog.showOpenDialog(windowName, {
+    //                     properties: ['openDirectory']
+    //                 });
+
+    //                 if (!dialogReturn.canceled && dialogReturn.filePaths) {
+    //                     resolve(dialogReturn.filePaths[0]);
+    //                 } else {
+    //                     reject('no selection');
+    //                 }
+    //             } catch (error) {
+    //                 reject(error);
+    //             }
+
+    //             ipcMain.removeHandler('open-dialog');
+    //             return 'dialog opened';
+    //         });
+    //     });
+    // }
+
     async openDialog(windowName) {
-        return new Promise((resolve, reject) => {
-            ipcMain.handle('open-dialog', async () => {
+        return new Promise( async (resolve, reject) => {
                 try {
                     const dialogReturn = await dialog.showOpenDialog(windowName, {
                         properties: ['openDirectory']
@@ -38,60 +63,91 @@ class HtmlDirectory {
                 } catch (error) {
                     reject(error);
                 }
-
-                ipcMain.removeHandler('open-dialog');
                 return 'dialog opened';
-            });
         });
     }
+
+
+    // async getProjectFiles(selectedPath, sharedPath) {
+    //     return new Promise(async (resolve, reject) => {
+    //         const projectFolders = selectedPath.split('\\');
+    //         const drive = projectFolders.shift();
+
+    //         if (sharedPath) {
+    //             this.edetailer.sharedPath = sharedPath;
+    //         }
+
+    //         this.edetailer.drive = drive;
+    //         const lastFolder = projectFolders[projectFolders.length - 1];
+
+    //         try {
+    //             // if (lastFolder === 'HTML') {
+    //                 this.edetailer.htmlPath = selectedPath;
+    //                 this.edetailer.sequences = [];
+    //                 const dir = await opendir(selectedPath);
+
+    //                 for await (const dirent of dir) {
+    //                     this.edetailer.sequences.push(dirent.name);
+    //                 }
+
+    //                 this.edetailer.sequences.sort(new Intl.Collator('en', {
+    //                     numeric: true,
+    //                     sensitivity: 'accent'
+    //                 }).compare);
+
+    //                 resolve(this.edetailer);
+    //             // } else {
+    //             //     reject(new Error('Please select a valid path.'));
+    //             // }
+    //         } catch (error) {
+    //             reject(error);
+    //         }
+    //     });
+    // }
 
     async getProjectFiles(selectedPath, sharedPath) {
-        
-        this.edetailer = {
-            drive: '',
-            htmlPath: null,
-            sequences: [],
-            firstSequence: '',
-            filesInSequence: {}
-        };
-        
         return new Promise(async (resolve, reject) => {
-            const projectFolders = selectedPath.split('\\');
-            const drive = projectFolders.shift();
-
-            if (sharedPath) {
-                this.edetailer.sharedPath = sharedPath;
-            }
-
-            this.edetailer.drive = drive;
-            const lastFolder = projectFolders[projectFolders.length - 1];
-
-            try {
-                if (lastFolder === 'HTML') {
-                    this.edetailer.htmlPath = selectedPath;
-                    this.edetailer.sequences = [];
-                    const dir = await opendir(selectedPath);
-
-                    for await (const dirent of dir) {
-                        this.edetailer.sequences.push(dirent.name);
-                    }
-
-                    this.edetailer.sequences.sort(new Intl.Collator('en', {
-                        numeric: true,
-                        sensitivity: 'accent'
-                    }).compare);
-
-                    resolve(this.edetailer);
-                } else {
-                    reject(new Error('Please select a valid path.'));
+          const projectFolders = selectedPath.split('\\');
+          const drive = projectFolders.shift();
+      
+          if (sharedPath) {
+            this.edetailer.sharedPath = sharedPath;
+          }
+      
+          this.edetailer.drive = drive;
+          const lastFolder = projectFolders[projectFolders.length - 1];
+      
+          try {
+            this.edetailer.htmlPath = selectedPath;
+            this.edetailer.sequences = [];
+            const dir = await opendir(selectedPath);
+      
+            for await (const dirent of dir) {
+              const itemPath = path.join(selectedPath, dirent.name);
+              const itemStats = await fsPromises.stat(itemPath);
+      
+              if (itemStats.isDirectory() && !dirent.name.endsWith('.zip')) {
+                const sequenceFiles = await fsPromises.readdir(itemPath);
+      
+                if (sequenceFiles.some(file => file.endsWith('.html'))) {
+                  this.edetailer.sequences.push(dirent.name);
                 }
-            } catch (error) {
-                reject(error);
+              }
             }
+      
+            this.edetailer.sequences.sort(new Intl.Collator('en', {
+              numeric: true,
+              sensitivity: 'accent'
+            }).compare);
+      
+            resolve(this.edetailer);
+          } catch (error) {
+            reject(error);
+          }
         });
-    }
-
-    getFilesInSequences(result) {
+      }
+      
+    getFilesInSequences( result, fileName = 'edetailerData.json' ) {
         this.edetailer = result;
         this.edetailer.filesInSequence = {};
         const sequenceList = this.edetailer.sequences;
@@ -107,25 +163,25 @@ class HtmlDirectory {
             }
         });
 
-        this.writeEdetailerDataFile();
+        this.writeEdetailerDataFile(fileName);
     }
 
-    writeEdetailerDataFile() {
+    writeEdetailerDataFile(fileName = 'edetailerData.json') {
         try {
             fs.mkdirSync(this.edetailerDataFolder, {
                 recursive: true
             });
             const edetailerData = JSON.stringify(this.edetailer);
-            // fs.writeFile(this.edetailerDataPath, edetailerData);
-            fs.writeFileSync(this.edetailerDataPath, edetailerData);
+            fs.writeFileSync(path.join(this.edetailerDataFolder, fileName), edetailerData);
         } catch (error) {
             console.log(error);
         }
     }
 
-    get getEdetailerData() {
+     getEdetailerData(fileName = 'edetailerData.json') {
+        
         try {
-            const data = fs.readFileSync(this.edetailerDataPath, 'utf8');
+            const data = fs.readFileSync(path.join(this.edetailerDataFolder, fileName), 'utf8');
             return JSON.parse(data);
         } catch (error) {
             throw new Error(`Error reading edetailerData.json: ${error}`);
@@ -133,15 +189,17 @@ class HtmlDirectory {
     }
 
     deleteEdetailerDataFile() {
-        return new Promise((resolve, reject) => {
-            fs.unlink(this.edetailerDataPath, (err) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve();
-                }
-            });
-        });
+        // return new Promise((resolve, reject) => {
+        //     fs.unlink(this.edetailerDataPath, (err) => {
+        //         if (err) {
+        //             reject(err);
+        //         } else {
+        //             resolve();
+        //         }
+        //     });
+        // });
+
+        deleteFilesFromDirectory(this.edetailerDataFolder);
     }
 }
 

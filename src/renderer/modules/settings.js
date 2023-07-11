@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // range slider for proffing level
-  proofingLevelInput.value = settings.proofingLevel || settings.proofingLevel === 0  ? (10 - (settings.proofingLevel * 10)) : 3;
+  proofingLevelInput.value = settings.proofingLevel || settings.proofingLevel === 0  ? (10 - (settings.proofingLevel * 10)) : 8;
   allRanges.forEach(wrap => {
   const range = wrap.querySelector(".range");
   const bubble = wrap.querySelector(".bubble");

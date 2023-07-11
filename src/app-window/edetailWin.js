@@ -141,7 +141,7 @@ class EdetailWindow {
       this.loadURL(this.getEdetailURLPath());
       return this.counterIndex;
     } else {
-      e.sender.send('gotoSlideReply', 'slide not present in sequence or is invalid');
+      e ? e.sender.send('gotoSlideReply', 'slide not present in sequence or is invalid'):'';
     }
   }
 

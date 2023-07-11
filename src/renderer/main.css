@@ -135,7 +135,9 @@ body{
 .d-block{
     display: block !important;
 }
-
+.d-none{
+    display: none !important;
+}
 nav {
     width: 100%;
     height: 32px;
@@ -153,7 +155,7 @@ nav {
     /* top: 0; */
     /* left: 0; */
     position: relative;
-    z-index: 99;
+    z-index: 100;
 }
 
 nav>div{
@@ -194,16 +196,15 @@ nav .left-nav button{
     height: 100%;
 }
 
-.project-info-container p{
+.project-info-container p {
     color: #fff;
     /* display: inline-block; */
     -webkit-app-region: no-drag;
     font-family: 'segoe UI', Arial, Helvetica,sans-serif;
     font-size: 0.9rem;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
+
 nav p input.project-location {
     border: none;
     /* background: none; */
@@ -221,6 +222,64 @@ nav p input.project-location {
 .project-info-container p span{
     font-weight: bold;
 }
+
+#multichannel-nav {
+    position: relative;
+    max-width: 40%;
+    display: block;
+}
+#multichannel-nav p.current-presentation {
+    cursor: pointer;
+    color: #fff;
+    background-color: #5664D2;
+    border-radius: 5px;
+    padding: 0px 0.6em;
+    box-shadow: 0px 3px 4px 1px #1b2468b0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    direction: rtl;
+    font-weight: bold;
+}
+  
+.multichannel-dropdown {
+    position: absolute;
+    top: 115%;
+    left: 0;
+    width: 100%;
+    background-color: #fff;
+    border: 1px solid #C5C5C5;
+    border-radius: 5px;
+    padding: 8px 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+}
+  
+  /* .multichannel-dropdown.show {
+    display: block;
+  } */
+  
+  .multichannel-dropdown p {
+    cursor: pointer;
+    padding: 8px 0;
+    color: #505050;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: auto;
+    direction: rtl;
+    display: inline-block;
+}
+  
+  
+  .multichannel-dropdown p:hover {
+    background-color: #f0f0f0;
+  }
+  
+
+
+
 nav .right-nav{
     padding-bottom: 4px;
 }
@@ -274,9 +333,6 @@ nav .right-nav button#toggle-fullscreen span#back-rect {
 
 /* css for context menu of sequance-data-holder div ends here */
 
-.d-none{
-    display: none !important;
-}
 
 main {
     /* margin-top: 20px; */
@@ -513,12 +569,17 @@ div#webview_left-nav button{
         margin: 5px 0;
         min-width: 100%;
     }
+    .project-location-container
+    {
+      display: none;
+    }
 }
 @media only screen and (max-width: 900px){
     
     nav p input.project-location {
         width: 200px;
     }
+  
 }
 @media only screen and (max-width: 800px){
    
@@ -529,11 +590,16 @@ div#webview_left-nav button{
     nav p input.project-location {
         width: 200px;
     }
+    .project-location-container
+    {
+      display: none;
+    }
 }
 @media only screen and (max-width: 650px){
    html {
         font-size: 13px;
       }
+    
   
 }
 @media only screen and (max-height: 700px){
@@ -819,3 +885,11 @@ button#add-pdf_btn {
   }
  
 /* range ends */
+
+
+/* multi channel persenation start */
+.persetationId-container{
+    margin-top: 30px;
+}
+
+/* multi channel persentation  ends*/

@@ -57,11 +57,11 @@ const getPdfInfo = function (pdfPath) {
 const getPdfPath = function () {
     if (appSettings.crm === 'veeva') {
         const veevaRecents = Recent.get('veevaRecent');
-        const scriptPdfPath = veevaRecents[0].scriptPdfPath;
+        const scriptPdfPath = veevaRecents[0]?.scriptPdfPath;
         return scriptPdfPath;
     } else if (appSettings.crm === 'oce') {
         const oceRecents = Recent.get('oceRecent');
-        const scriptPdfPath = oceRecents[0].scriptPdfPath;
+        const scriptPdfPath = oceRecents[0]?.scriptPdfPath;
         return scriptPdfPath;
     }
 }

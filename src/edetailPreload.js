@@ -17,7 +17,7 @@ function virtulaizeAPI() {
     if (appSettings.crm === 'veeva') {
         const com = { veeva: { clm: {} } };
         com.veeva.clm.gotoSlide = function (slideName, presentation) {
-            ipcRenderer.send('gotoSlide', slideName)
+            ipcRenderer.send('gotoSlide', {slideName, presentation});
         }
         
         com.veeva.clm.runAPIRequest = function (request) {
@@ -41,8 +41,8 @@ function virtulaizeAPI() {
             destroyNoSwipeRegion: (regionId) => {
                 return null
             },
-            gotoSlide: (sequanceName) => {
-                ipcRenderer.send('gotoSlide', sequanceName)
+            gotoSlide: (slideName) => {
+                ipcRenderer.send('gotoSlide', {slideName});
             },
             goNextSequence: () => {
                 ipcRenderer.send('goNextSequence')

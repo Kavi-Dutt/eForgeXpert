@@ -316,7 +316,9 @@ ipcRenderer.on('data-from-main', (e, args) => {
     edetailerData = args
     createDataTable(edetailerData);
     changeWebviewSrc(edetailerData.sequences[0]);
-    totalSlidesText.innerText= edetailerData.sequences.length
+    totalSlidesText.innerText= edetailerData.sequences.length;
+    handleRemoveSahredButton();
+    console.log('data from main event trigired');
 })
 
 document.addEventListener('sequanceTableCreated',function(){
@@ -500,4 +502,16 @@ sideButtons.forEach((li, index) => {
         asideSettingsPannel.classList.toggle('d-block');
         settingsBlocks[index].classList.toggle('d-block');
     })
+})
+
+// rmoving shared from all slides on click of remove shared button
+// for now it's placed here temporary should be place in a proper module in future
+
+const removeSharedButton = document.querySelector('#remove-shared-btn');
+
+function handleRemoveSahredButton(){
+    appSettings.crm ==="veeva"? removeSharedButton.classList.remove('d-none'):removeSharedButton.classList.add('d-none');
+}
+removeSharedButton.addEventListener('click', function(){
+    ipcRenderer.send('req/remove-shared');
 })
