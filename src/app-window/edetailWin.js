@@ -162,7 +162,6 @@ class EdetailWindow {
   }
 }
 
-// Usage example:
 
 module.exports = {EdetailWindow}
 
